@@ -26,6 +26,9 @@ app.use("/api/access", accessRoutes);//doctor access
 const recordsRoutes = require('./routes/records.routes');
 app.use('/api/records', recordsRoutes);
 
+// ✅ Contact form API route (NEW)
+app.use("/api/contact", require("./routes/contact"));
+
 // Serve frontend static files
 const frontendPath = path.join(__dirname, "../frontend");
 app.use(express.static(frontendPath));
