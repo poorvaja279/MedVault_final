@@ -44,7 +44,6 @@
   </style>
 </head>
 <body>
-  <!-- header -->
   <header>
     <div class="logo">MedVault</div>
     <div class="profile">
@@ -54,7 +53,6 @@
   </header>
 
 <div class="wrap">
-  <!-- sidebar -->
   <aside class="sidebar">
     <div class="title">Menu</div>
     <a class="link" href="dashboard.html">Dashboard</a>
@@ -64,7 +62,6 @@
     <a class="link" href="patient-qr.html">QR</a>
   </aside>
   
-  <!-- main content -->
   <main class="content">
     <section class="records">
       <h2>Your Records</h2>
@@ -79,18 +76,19 @@
 </div>
 
 <script>
-const BASE = "https://medvault-backend-vfsu.onrender.com";
 const token = localStorage.getItem("token");
 
 async function fetchRecords() {
   try {
-    const res = await fetch(`${BASE}/api/records`, {
-      headers: { Authorization: \`Bearer ${token}\` }
+    const res = await fetch("https://medvault-backend-vfsu.onrender.com/api/records", {
+      headers: { Authorization: `Bearer ${token}` }
     });
 
     if (!res.ok) throw new Error("Failed to load records");
 
     const records = await res.json();
+    console.log("Fetched records:", records);
+
     const list = document.getElementById("recordList");
     list.innerHTML = "";
 
@@ -113,10 +111,8 @@ async function fetchRecords() {
   }
 }
 
-// Load on page open
 fetchRecords();
 
-// Upload
 document.getElementById('uploadForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const file = document.getElementById('fileInput').files[0];
@@ -126,9 +122,9 @@ document.getElementById('uploadForm').addEventListener('submit', async (e) => {
   formData.append('file', file);
 
   try {
-    const res = await fetch(`${BASE}/api/records/upload`, {
+    const res = await fetch('https://medvault-backend-vfsu.onrender.com/api/records/upload', {
       method: 'POST',
-      headers: { Authorization: \`Bearer ${token}\` },
+      headers: { Authorization: `Bearer ${token}` },
       body: formData
     });
     const data = await res.json();
@@ -141,24 +137,30 @@ document.getElementById('uploadForm').addEventListener('submit', async (e) => {
   }
 });
 
-// Delete
 document.getElementById("recordList").addEventListener("click", async (e) => {
   if (e.target.classList.contains("delete-btn")) {
-    const key = e.target.getAttribute("data-key");
-    if (!confirm("Delete this record?")) return;
+   const key = e.target.getAttribute("data-key");
+    if (!key) {
+      alert("Error: Missing file key for deletion.");
+      return;
+    }
+
+    if (!confirm("Are you sure you want to delete this record?"))
+      return;
 
     try {
-      const res = await fetch(`${BASE}/api/records/${encodeURIComponent(key)}`, {
+      const res = await fetch(`https://medvault-backend-vfsu.onrender.com/api/records/${encodeURIComponent(key)}`, {
         method: "DELETE",
-        headers: { Authorization: \`Bearer ${token}\` }
+        headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Delete failed");
 
-      alert("Deleted successfully");
+      alert("Record deleted successfully");
       fetchRecords();
     } catch (err) {
-      alert("Error deleting file");
+      console.error(err);
+      alert("Error deleting record");
     }
   }
 });
