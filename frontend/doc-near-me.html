@@ -106,28 +106,27 @@
 </div>
 
 <script>
+  // Hardcoded VIT Vellore coordinates
   const vitVellore = [12.972442, 79.159124];
-  const map = L.map("map").setView(vitVellore, 14);
 
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    attribution: '&copy; OpenStreetMap'
-  }).addTo(map);
+  const map = L.map("map").setView(vitVellore, 14);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
 
   const blueIcon = new L.Icon({
     iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png",
     shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
-    iconSize: [25, 41], iconAnchor: [12, 41]
+    iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41],
   });
 
   const redIcon = new L.Icon({
     iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png",
     shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
-    iconSize: [25, 41], iconAnchor: [12, 41]
+    iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41],
   });
 
   L.marker(vitVellore, { icon: blueIcon }).addTo(map).bindPopup("YOU").openPopup();
 
-  // ✅ Updated fetch URL to Render backend
+  // ✅ FIXED BACKEND API URL
   fetch("https://medvault-backend-vfsu.onrender.com/api/doctors")
     .then(res => res.json())
     .then(doctors => {
@@ -141,7 +140,7 @@
                 const lon = data[0].lon;
                 L.marker([lat, lon], { icon: redIcon })
                   .addTo(map)
-                  .bindPopup(`<b>${doc.name}</b><br>Speciality: ${doc.speciality}<br>Hospital: ${doc.hospitalAddress}`);
+                  .bindPopup(`<b>${doc.fullName}</b><br>Speciality: ${doc.speciality}<br>Hospital: ${doc.hospitalAddress}`);
               }
             });
         }
