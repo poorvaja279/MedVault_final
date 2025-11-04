@@ -51,7 +51,9 @@
   </main>
 
 <script>
+// ✅ updated base URL for Render
 const API_BASE = "https://medvault-backend-vfsu.onrender.com/api/admin";
+
 const tableBody = document.getElementById("pendingDoctorsTableBody");
 const logoutBtn = document.getElementById("logoutBtn");
 const token = localStorage.getItem("token");
@@ -62,7 +64,7 @@ if (!token) {
   window.location.href = "login.html";
 }
 
-// Logout handler
+// Logout
 logoutBtn.addEventListener("click", () => {
   localStorage.removeItem("token");
   alert("✅ Logged out successfully!");
@@ -73,18 +75,10 @@ logoutBtn.addEventListener("click", () => {
 async function fetchPendingDoctors() {
   try {
     const res = await fetch(`${API_BASE}/pending-doctors`, {
-      headers: { 
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + token 
-      }
+      headers: { "Authorization": "Bearer " + token }
     });
     const data = await res.json();
     tableBody.innerHTML = "";
-
-    if (!res.ok) {
-      tableBody.innerHTML = `<tr><td colspan="8" style="color:red; text-align:center;">${data.message || "Failed to fetch doctors"}</td></tr>`;
-      return;
-    }
 
     if (!Array.isArray(data) || data.length === 0) {
       tableBody.innerHTML = `<tr><td colspan="8" style="text-align:center;">No pending doctors</td></tr>`;
@@ -93,10 +87,11 @@ async function fetchPendingDoctors() {
 
     data.forEach(doc => {
       const tr = document.createElement("tr");
+      tr.id = `row-${doc._id}`;
       tr.innerHTML = `
         <td>${doc.fullName}</td>
         <td>${doc.nmcRegNo}</td>
-        <td>${doc.stateMedicalCouncil}</td>
+        <td>${doc.stateMedicalCouncil || "-"}</td>
         <td>${doc.hospitalAddress}</td>
         <td>${doc.speciality}</td>
         <td>${doc.email}</td>
@@ -109,52 +104,44 @@ async function fetchPendingDoctors() {
       tableBody.appendChild(tr);
     });
   } catch (err) {
-    console.error("❌ Error fetching doctors:", err);
-    tableBody.innerHTML = `<tr><td colspan="8" style="color:red; text-align:center;">Error fetching data</td></tr>`;
+    console.error(err);
+    tableBody.innerHTML = `<tr><td colspan="8" style="color:red;text-align:center;">Error loading data</td></tr>`;
   }
 }
 
-// Approve doctor
+// ✅ Approve doctor
 async function approveDoctor(id) {
-  if (!confirm("Are you sure you want to approve this doctor?")) return;
-  try {
-    const res = await fetch(`${API_BASE}/approve-doctor/${id}`, {
-      method: "POST",
-      headers: { 
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + token 
-      }
-    });
-    const result = await res.json();
-    alert(result.message || "Doctor approved");
-    fetchPendingDoctors();
-  } catch (err) {
-    console.error(err);
-    alert("Error approving doctor");
-  }
+  if (!confirm("Approve this doctor?")) return;
+
+  const res = await fetch(`${API_BASE}/approve-doctor/${id}`, {
+    method: "POST",
+    headers: { "Authorization": "Bearer " + token }
+  });
+  const result = await res.json();
+
+  alert(result.message || "Doctor approved");
+
+  // ✅ Remove row instantly
+  document.getElementById(`row-${id}`)?.remove();
 }
 
-// Reject doctor
+// ✅ Reject doctor
 async function rejectDoctor(id) {
-  if (!confirm("Are you sure you want to reject this doctor?")) return;
-  try {
-    const res = await fetch(`${API_BASE}/reject-doctor/${id}`, {
-      method: "POST",
-      headers: { 
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + token 
-      }
-    });
-    const result = await res.json();
-    alert(result.message || "Doctor rejected");
-    fetchPendingDoctors();
-  } catch (err) {
-    console.error(err);
-    alert("Error rejecting doctor");
-  }
+  if (!confirm("Reject this doctor?")) return;
+
+  const res = await fetch(`${API_BASE}/reject-doctor/${id}`, {
+    method: "POST",
+    headers: { "Authorization": "Bearer " + token }
+  });
+  const result = await res.json();
+
+  alert(result.message || "Doctor rejected");
+
+  // ✅ Remove row instantly
+  document.getElementById(`row-${id}`)?.remove();
 }
 
-// Load data on page load
+// Load data
 fetchPendingDoctors();
 </script>
 </body>
