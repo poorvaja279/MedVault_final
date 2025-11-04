@@ -1,27 +1,44 @@
 const express = require("express");
 const router = express.Router();
-const Health = require("../models/Health");
+const HealthData = require("../models/HealthData"); // ✅ correct file
 
-// Add entry
+// Add health entry
 router.post("/add", async (req, res) => {
   try {
-    const health = new Health(req.body);
-    await health.save();
-    res.json({ message: "Data saved" });
+    const { patientId, systolic, diastolic, weight, bloodSugar } = req.body;
+
+    if (!patientId) {
+      return res.status(400).json({ error: "patientId required" });
+    }
+
+    const record = new HealthData({
+      patientId,
+      systolic,
+      diastolic,
+      weight,
+      bloodSugar
+    });
+
+    await record.save();
+    res.json({ message: "Health record saved ✅" });
+
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Server error saving health data" });
+    console.error("Error saving health data:", err);
+    res.status(500).json({ error: "Server error" });
   }
 });
 
-// Get all entries for a patient
+// Get all health records for patient
 router.get("/:patientId", async (req, res) => {
   try {
-    const data = await Health.find({ patientId: req.params.patientId }).sort({ date: 1 });
+    const { patientId } = req.params;
+
+    const data = await HealthData.find({ patientId }).sort({ date: 1 });
+
     res.json(data);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Server error fetching data" });
+    console.error("Error fetching health data:", err);
+    res.status(500).json({ error: "Server error" });
   }
 });
 
