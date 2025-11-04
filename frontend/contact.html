@@ -21,7 +21,7 @@ body {
   background: #f9fcff;
 }
 
-/* Header (copied exact style from index page) */
+/* Header (same as index page) */
 header {
   background: linear-gradient(90deg, #0d6efd, #20c997);
   color: white;
@@ -58,7 +58,7 @@ header nav a:hover {
   transform: scale(1.05);
 }
 
-/* Contact Form Container */
+/* Contact Form */
 .container {
   width: 50%;
   margin: 60px auto;
@@ -136,15 +136,21 @@ document.getElementById("helpForm").addEventListener("submit", async (e) => {
     message: document.getElementById("message").value
   };
 
-  const res = await fetch("https://YOUR_BACKEND_URL/api/help", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data)
-  });
+  try {
+    const res = await fetch("https://medvault-backend-vfsu.onrender.com/api/contact", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    });
 
-  const result = await res.json();
-  alert(result.message);
-  document.getElementById("helpForm").reset();
+    const result = await res.json();
+    alert(result.message);
+    document.getElementById("helpForm").reset();
+
+  } catch (err) {
+    alert("Error submitting form ❌");
+    console.log(err);
+  }
 });
 </script>
 
