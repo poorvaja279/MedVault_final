@@ -66,7 +66,7 @@
           <div class="field"><label>Date of Birth</label><input type="date" name="dob" required></div>
         </div>
         <div class="row">
-          <div class="field"><label>Phone Number</label><input type="tel" name="phone" pattern="[0-9]{10}" title="Enter 10-digit phone number" required></div>
+          <div class="field"><label>Phone Number</label><input type="tel" name="phone" pattern="[0-9]{10}" required></div>
           <div class="field"><label>Email</label><input type="email" name="email" required></div>
         </div>
         <div class="row">
@@ -103,7 +103,7 @@
         <div class="field"><label>Speciality</label><input type="text" name="speciality" required></div>
         <div class="row">
           <div class="field"><label>Email</label><input type="email" name="email" required></div>
-          <div class="field"><label>Phone Number</label><input type="tel" name="phone" pattern="[0-9]{10}" title="Enter 10-digit phone number" required></div>
+          <div class="field"><label>Phone Number</label><input type="tel" name="phone" pattern="[0-9]{10}" required></div>
         </div>
         <div class="row">
           <div class="field"><label>Password</label><input type="password" name="password" id="doctorPassword" required></div>
@@ -148,7 +148,7 @@ doctorBtn.addEventListener("click", () => {
 });
 
 function validatePassword(password) {
-  return /^(?=.*[A-Z])(?=.*[!@#$%^&*(),.?":{}|<>]).{8,}$/.test(password);
+  return /^(?=.*[A-Z])(?=.*[!@#$%^&*(),.?\":{}|<>]).{8,}$/.test(password);
 }
 
 async function submitForm(form, url, messageDiv) {
@@ -186,14 +186,15 @@ async function submitForm(form, url, messageDiv) {
   }
 }
 
+// ✅ Updated signup API URLs
 patientForm.addEventListener("submit", e => { 
   e.preventDefault(); 
-  submitForm(patientForm, "http://localhost:5001/api/auth/signup/patient", document.getElementById("patientMessage")); 
+  submitForm(patientForm, "https://medvault-backend-vfsu.onrender.com/api/auth/signup/patient", document.getElementById("patientMessage")); 
 });
 
 doctorForm.addEventListener("submit", e => { 
   e.preventDefault(); 
-  submitForm(doctorForm, "http://localhost:5001/api/auth/signup/doctor", document.getElementById("doctorMessage")); 
+  submitForm(doctorForm, "https://medvault-backend-vfsu.onrender.com/api/auth/signup/doctor", document.getElementById("doctorMessage")); 
 });
 </script>
 
