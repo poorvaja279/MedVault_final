@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contact Us | MedVault</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;700&family=Open+Sans&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --primary-blue: #0d6efd;
+  --primary-green: #20c997;
+  --text-dark: #333;
+  --font-heading: 'Poppins', sans-serif;
+  --font-body: 'Open Sans', sans-serif;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  background: #f9fcff;
+}
+
+/* Header (copied exact style from index page) */
+header {
+  background: linear-gradient(90deg, #0d6efd, #20c997);
+  color: white;
+  padding: 1rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+header nav {
+  display: flex;
+  gap: 1rem;
+}
+
+header nav a {
+  color: white;
+  text-decoration: none;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: background 0.3s, transform 0.2s;
+}
+
+header nav a:hover {
+  background: rgba(255, 255, 255, 0.35);
+  transform: scale(1.05);
+}
+
+/* Contact Form Container */
+.container {
+  width: 50%;
+  margin: 60px auto;
+  background: #ffffff;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.container h2 {
+  text-align: center;
+  font-family: var(--font-heading);
+  color: var(--primary-blue);
+  margin-bottom: 1rem;
+}
+
+input, textarea {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  border: 1px solid #d5d8df;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+button {
+  margin-top: 15px;
+  width: 100%;
+  padding: 12px;
+  background: var(--primary-green);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-family: var(--font-heading);
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+button:hover {
+  background: #17a589;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>MedVault</h1>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="signup.html">Sign Up</a>
+    <a href="login.html">Login</a>
+  </nav>
+</header>
+
+<div class="container">
+  <h2>Contact MedVault Support</h2>
+
+  <form id="helpForm">
+    <input type="text" id="name" placeholder="Your Name" required>
+    <input type="email" id="email" placeholder="Your Email" required>
+    <textarea id="message" placeholder="How can we help you?" rows="4" required></textarea>
+    <button type="submit">Submit</button>
+  </form>
+</div>
+
+<script>
+document.getElementById("helpForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const data = {
+    name: document.getElementById("name").value,
+    email: document.getElementById("email").value,
+    message: document.getElementById("message").value
+  };
+
+  const res = await fetch("https://YOUR_BACKEND_URL/api/help", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  });
+
+  const result = await res.json();
+  alert(result.message);
+  document.getElementById("helpForm").reset();
+});
+</script>
+
+</body>
+</html>
