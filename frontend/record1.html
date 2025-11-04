@@ -20,10 +20,6 @@
 
 <div id="patientInfo"></div>
 
-<!---<h3>Upload New Record</h3>
-<input type="file" id="fileInput" />
-<button id="uploadBtn">Upload</button>--->
-
 <h3>Available Records</h3>
 <table id="recordsTable">
   <thead>
@@ -35,100 +31,60 @@
 </table>
 
 <script>
-  
-  const token = localStorage.getItem('token');
-  if (!token) {
-    alert('Not logged in!');
-    window.location.href = 'login.html';
-  }
+const token = localStorage.getItem('token');
+if (!token) {
+  alert('Not logged in!');
+  window.location.href = 'login.html';
+}
 
-  // Get patientId from URL query parameter
-  // Determine patientId (for doctors, comes from query param)
-  const urlParams = new URLSearchParams(window.location.search);
-  let patientId = urlParams.get('patientId');
-  console.log("Patient ID from URL:", patientId);
-  if (patientId) {
-    document.getElementById('patientInfo').textContent = `Patient ID: ${patientId}`;
-  } else {
-  // For patients viewing their own records
-    document.getElementById('patientInfo').textContent = `Your Records`;
-    patientId = ''; // Leave blank → backend will infer from JWT
-  }
+// Get patientId if doctor is viewing
+const urlParams = new URLSearchParams(window.location.search);
+let patientId = urlParams.get('patientId');
 
+if (patientId) {
+  document.getElementById('patientInfo').textContent = `Patient ID: ${patientId}`;
+} else {
+  document.getElementById('patientInfo').textContent = `Your Records`;
+  patientId = ''; // patient view → backend infers from token
+}
 
-  // Fetch and display records from backend API
-  async function fetchRecords() {
+async function fetchRecords() {
   try {
-    console.log("Fetching records for patientId:", patientId);
-    const url = `/api/records${patientId ? `?patientId=${patientId}` : ''}`;
-    console.log("Request URL:", url);
+    const baseURL = "https://medvault-backend-vfsu.onrender.com/api/records";
+    const url = patientId ? `${baseURL}?patientId=${patientId}` : baseURL;
 
     const response = await fetch(url, {
       headers: { Authorization: 'Bearer ' + token }
     });
 
-    console.log("Response status:", response.status);
-
     if (!response.ok) {
       const text = await response.text();
-      console.error("Server error:", text);
-      throw new Error(`Fetch failed: ${response.status}`);
+      throw new Error(`Error: ${response.status} ${text}`);
     }
 
     const data = await response.json();
-    console.log("Records received:", data);
-
     const tbody = document.getElementById('recordsBody');
     tbody.innerHTML = '';
+
     if (data.length === 0) {
       tbody.innerHTML = '<tr><td colspan="2">No records found.</td></tr>';
       return;
     }
+
     data.forEach(record => {
       const tr = document.createElement('tr');
       tr.innerHTML = `<td>${record.fileName}</td><td><a href="${record.url}" target="_blank">View</a></td>`;
       tbody.appendChild(tr);
     });
+
   } catch (error) {
-    console.error("FetchRecords error:", error);
+    console.error("Error loading records:", error);
     alert('Error loading records: ' + error.message);
   }
 }
 
-
-  // Upload new record to backend
-  /*
-  document.getElementById('uploadBtn').addEventListener('click', async () => {
-    const fileInput = document.getElementById('fileInput');
-    if (!fileInput.files.length) {
-      alert('Please select a file first');
-      return;
-    }
-    const file = fileInput.files[0];
-    const formData = new FormData();
-    formData.append('file', file);
-
-    try {
-      const response = await fetch('/api/records/upload', {
-        method: 'POST',
-        headers: { Authorization: 'Bearer ' + token },
-        body: formData
-      });
-      if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.error || 'Upload failed');
-      }
-      alert('Upload successful');
-      fileInput.value = '';
-      fetchRecords();
-    } catch (error) {
-      console.error(error);
-      alert('Error uploading record: ' + error.message);
-    }
-  });*/
-
-  // Initial fetch on page load
-  fetchRecords();
+// Load on page open
+fetchRecords();
 </script>
 
 </body>
