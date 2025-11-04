@@ -12,7 +12,6 @@
     *{ box-sizing:border-box; margin:0; padding:0 }
     body{ font-family:Inter,system-ui,"Segoe UI",Roboto; background:var(--bg); color:#071022; }
 
-    /* === topbar === */
     .topbar{
       height:64px;
       display:flex;
@@ -23,7 +22,6 @@
       color:#fff; font-weight:600; position:relative;
     }
 
-    /* === layout === */
     .wrap{ display:flex; min-height:calc(100vh - 64px); }
     .sidebar{ width:220px; background:var(--card); border-right:1px solid #eee; padding:16px; display:flex; flex-direction:column; }
     .sidebar .title{ font-weight:700; margin-bottom:12px; }
@@ -32,7 +30,6 @@
 
     .content{ flex:1; padding:20px; display:flex; flex-direction:column; gap:20px; }
 
-    /* === cards === */
     .card{ background:var(--card); border-radius:12px; padding:16px; box-shadow:0 4px 12px rgba(2,6,23,0.05); }
     .card h3{ margin-bottom:12px; font-size:1.05rem; font-weight:600; }
     .muted{ color:var(--muted); font-style:italic; }
@@ -44,7 +41,6 @@
     .chart-card h4{ margin-bottom:10px; font-weight:600; }
     canvas{ width:100% !important; height:260px !important; }
 
-    /* === profile dropdown === */
     .profile-btn img {
       width:40px; height:40px; border-radius:50%; cursor:pointer; border:2px solid #fff;
     }
@@ -66,7 +62,6 @@
     }
     .dropdown button:hover { background:#005fcc; }
 
-    /* === header logout button === */
     #headerLogoutBtn{
       background:#fff; color:#0f7cff; border:none; padding:6px 12px;
       border-radius:8px; cursor:pointer; font-weight:600; transition:.2s;
@@ -76,7 +71,6 @@
 </head>
 <body>
 <script>
-  // JWT check
   const token = localStorage.getItem("token");
   if (!token) {
     alert("⚠ You are not logged in!");
@@ -84,21 +78,16 @@
   }
 </script>
 
-<!-- topbar -->
 <div class="topbar">
   <div class="brand">medvault</div>
 
   <div style="display:flex; align-items:center; gap:10px;">
-    <!-- profile button -->
     <div class="profile-btn" id="profileBtn">
       <img id="profilePic" src="" alt="profile" />
     </div>
-
-    <!-- logout button directly in header -->
     <button id="headerLogoutBtn">Logout</button>
   </div>
 
-  <!-- dropdown -->
   <div class="dropdown" id="dropdownMenu">
     <img id="dropdownPic" src="" alt="profile" />
     <h4 id="patientName"></h4>
@@ -108,7 +97,6 @@
 </div>
 
 <div class="wrap">
-  <!-- sidebar -->
   <aside class="sidebar">
     <div class="title">Menu</div>
     <a class="link" href="dashboard.html">Dashboard</a>
@@ -118,7 +106,6 @@
     <a class="link" href="patient-qr.html">QR</a>
   </aside>
 
-  <!-- content -->
   <main class="content">
     <div class="top-row">
       <section class="card">
@@ -158,7 +145,7 @@
       const token = localStorage.getItem("token");
       if (!token) throw new Error("Not logged in");
 
-      const res = await fetch("http://localhost:5001/api/patient/qr", {
+      const res = await fetch("https://medvault-backend-vfsu.onrender.com/api/patient/qr", {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -173,13 +160,11 @@
 
       const data = await res.json();
 
-      // Fill topbar dropdown
       document.getElementById("patientName").textContent = data.fullName;
       document.getElementById("patientId").textContent = "ID: " + data.patientId;
       document.getElementById("profilePic").src = data.profilePic || "https://cdn-icons-png.flaticon.com/512/3774/3774299.png";
       document.getElementById("dropdownPic").src = data.profilePic || "https://cdn-icons-png.flaticon.com/512/3774/3774299.png";
 
-      // Optional: fill other dashboard elements if needed
     } catch (err) {
       console.error(err);
       alert(err.message);
@@ -187,13 +172,11 @@
     }
   }
 
-  // Logout button in header
   document.getElementById("headerLogoutBtn").addEventListener("click", () => {
     localStorage.removeItem("token");
     window.location.href = "login.html";
   });
 
-  // Logout button in dropdown
   document.getElementById("logoutBtn").addEventListener("click", () => {
     localStorage.removeItem("token");
     window.location.href = "login.html";
@@ -203,7 +186,7 @@
   
   async function loadRequests() {
   try {
-    const res = await fetch("http://localhost:5001/api/access/requests", {
+    const res = await fetch("https://medvault-backend-vfsu.onrender.com/api/access/requests", {
       headers: { Authorization: `Bearer ${token}` }
     });
     const data = await res.json();
@@ -233,7 +216,7 @@
 }
 
 async function handleRequest(id, action) {
-  const res = await fetch("http://localhost:5001/api/access/respond", {
+  const res = await fetch("https://medvault-backend-vfsu.onrender.com/api/access/respond", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -247,7 +230,6 @@ async function handleRequest(id, action) {
 }
 
 loadRequests();
-// Example fake data for charts
 
 const bpData = {
   labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep"],
@@ -292,7 +274,6 @@ const sugarData = {
   }]
 };
 
-// Chart options can be reused or customized
 const chartOptions = {
   responsive: true,
   maintainAspectRatio: false,
@@ -301,7 +282,6 @@ const chartOptions = {
   }
 };
 
-// Initialize charts with fake data
 const bpChart = new Chart(document.getElementById("bpChart"), {
   type: "line",
   data: bpData,
@@ -319,9 +299,6 @@ const sugarChart = new Chart(document.getElementById("sugarChart"), {
   data: sugarData,
   options: chartOptions,
 });
-
-
-
 </script>
 
 </body>
