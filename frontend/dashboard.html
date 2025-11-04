@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>MedVault — Patient Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --blue:#0f7cff; --teal:#00c6a7; --bg:#f4fbfb; --muted:#6b7280; --card:#fff;
+    }
+    *{ box-sizing:border-box; margin:0; padding:0 }
+    body{ font-family:Inter,system-ui,"Segoe UI",Roboto; background:var(--bg); color:#071022; }
+    .topbar{ height:64px; display:flex; align-items:center; justify-content:space-between;
+      padding:0 20px; background:linear-gradient(90deg,var(--blue),var(--teal));
+      color:#fff; font-weight:600; position:relative; }
+    .wrap{ display:flex; min-height:calc(100vh - 64px); }
+    .sidebar{ width:220px; background:var(--card); border-right:1px solid #eee;
+      padding:16px; display:flex; flex-direction:column; }
+    .sidebar .title{ font-weight:700; margin-bottom:12px; }
+    .sidebar .link{ padding:10px 12px; margin-bottom:6px; border-radius:8px;
+      color:var(--muted); text-decoration:none; cursor:pointer; transition:.25s; }
+    .sidebar .link:hover{ background:rgba(15,124,255,0.08); color:#0f7cff; }
+    .content{ flex:1; padding:20px; display:flex; flex-direction:column; gap:20px; }
+    .card{ background:var(--card); border-radius:12px; padding:16px;
+      box-shadow:0 4px 12px rgba(2,6,23,0.05); }
+    .card h3{ margin-bottom:12px; font-size:1.05rem; font-weight:600; }
+    .muted{ color:var(--muted); font-style:italic; }
+    .top-row{ display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+    .charts{ display:flex; flex-direction:column; gap:20px; }
+    .chart-card{ background:linear-gradient(180deg,#f9fdfd,#fff); border-radius:12px;
+      padding:16px; box-shadow:0 6px 20px rgba(2,6,23,0.05); }
+    .chart-card h4{ margin-bottom:10px; font-weight:600; }
+    canvas{ width:100% !important; height:260px !important; }
+    .profile-btn img{ width:40px; height:40px; border-radius:50%; cursor:pointer; border:2px solid #fff; }
+    .dropdown{ position:absolute; top:64px; right:20px; background:#fff; border-radius:12px;
+      box-shadow:0 6px 20px rgba(2,6,23,0.15); padding:16px; width:200px;
+      display:none; flex-direction:column; align-items:center; z-index:1000; }
+    .dropdown img{ width:70px; height:70px; border-radius:50%; margin-bottom:10px; }
+    .dropdown h4{ margin:5px 0; font-size:1rem; }
+    .dropdown button{ margin-top:10px; background:#0f7cff; color:#fff; border:none;
+      padding:8px 12px; border-radius:8px; cursor:pointer; transition:.2s; }
+    .dropdown button:hover{ background:#005fcc; }
+    #headerLogoutBtn{ background:#fff; color:#0f7cff; border:none; padding:6px 12px;
+      border-radius:8px; cursor:pointer; font-weight:600; transition:.2s; }
+    #headerLogoutBtn:hover{ background:#e6e6e6; }
+  </style>
+</head>
+<body>
+<script>
+  const token = localStorage.getItem("token");
+  if (!token) {
+    alert("⚠ You are not logged in!");
+    window.location.href = "login.html";
+  }
+</script>
+
+<div class="topbar">
+  <div class="brand">medvault</div>
+  <div style="display:flex; align-items:center; gap:10px;">
+    <div class="profile-btn" id="profileBtn">
+      <img id="profilePic" src="" alt="profile" />
+    </div>
+    <button id="headerLogoutBtn">Logout</button>
+  </div>
+  <div class="dropdown" id="dropdownMenu">
+    <img id="dropdownPic" src="" alt="profile" />
+    <h4 id="patientName"></h4>
+    <p id="patientId" style="color:#6b7280; font-size:0.9rem;"></p>
+    <button id="logoutBtn">Sign out</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <aside class="sidebar">
+    <div class="title">Menu</div>
+    <a class="link" href="dashboard.html">Dashboard</a>
+    <a class="link" href="emergency.html">Emergency Data</a>
+    <a class="link" href="records.html">Records</a>
+    <a class="link" href="doc-near-me.html">Doc Near Me</a>
+    <a class="link" href="patient-qr.html">QR</a>
+  </aside>
+
+  <main class="content">
+    <div class="top-row">
+      <section class="card">
+        <h3>Requests</h3>
+        <div id="requestsContainer" class="muted">Loading...</div>
+      </section>
+      <section class="card">
+        <h3>Current Medications</h3>
+        <textarea id="medicationsInput" placeholder="Type your current medications here..." style="width:100%; min-height:100px; padding:8px; border:1px solid #ccc; border-radius:6px;"></textarea>
+        <button id="saveMedications" style="margin-top:10px; background:#0f7cff; color:#fff; border:none; padding:8px 12px; border-radius:8px; cursor:pointer;">Save</button>
+        <div id="medicationsDisplay" class="muted" style="margin-top:10px;">No active medications</div>
+      </section>
+    </div>
+
+    <div class="card">
+      <h3>Add Health Data</h3>
+      <form id="dataForm" style="display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end;">
+        <div>
+          <label>Systolic (mmHg)</label><br>
+          <input type="number" id="systolic" style="padding:6px; border:1px solid #ccc; border-radius:6px;">
+        </div>
+        <div>
+          <label>Diastolic (mmHg)</label><br>
+          <input type="number" id="diastolic" style="padding:6px; border:1px solid #ccc; border-radius:6px;">
+        </div>
+        <div>
+          <label>Weight (kg)</label><br>
+          <input type="number" id="weight" style="padding:6px; border:1px solid #ccc; border-radius:6px;">
+        </div>
+        <div>
+          <label>Blood Sugar (mg/dL)</label><br>
+          <input type="number" id="sugar" style="padding:6px; border:1px solid #ccc; border-radius:6px;">
+        </div>
+        <button type="submit" style="background:#0f7cff; color:#fff; border:none; padding:8px 16px; border-radius:8px; cursor:pointer;">Add Data</button>
+      </form>
+    </div>
+
+    <div class="charts">
+      <div class="chart-card">
+        <h4>Blood Pressure</h4>
+        <canvas id="bpChart"></canvas>
+      </div>
+      <div class="chart-card">
+        <h4>Weight</h4>
+        <canvas id="weightChart"></canvas>
+      </div>
+      <div class="chart-card">
+        <h4>Blood Sugar</h4>
+        <canvas id="sugarChart"></canvas>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+/* === Patient Data === */
+async function loadPatientData() {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) throw new Error("Not logged in");
+    const res = await fetch("http://localhost:5001/api/patient/qr", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error("Failed to fetch patient data");
+    const data = await res.json();
+    document.getElementById("patientName").textContent = data.fullName;
+    document.getElementById("patientId").textContent = "ID: " + data.patientId;
+    document.getElementById("profilePic").src = data.profilePic || "https://cdn-icons-png.flaticon.com/512/3774/3774299.png";
+    document.getElementById("dropdownPic").src = data.profilePic || "https://cdn-icons-png.flaticon.com/512/3774/3774299.png";
+  } catch (err) {
+    console.error(err);
+    alert(err.message);
+    window.location.href = "login.html";
+  }
+}
+
+/* === Logout === */
+document.getElementById("headerLogoutBtn").addEventListener("click", () => {
+  localStorage.removeItem("token");
+  window.location.href = "login.html";
+});
+document.getElementById("logoutBtn").addEventListener("click", () => {
+  localStorage.removeItem("token");
+  window.location.href = "login.html";
+});
+loadPatientData();
+
+/* === Requests === */
+async function loadRequests() {
+  const token = localStorage.getItem("token");
+  if (!token) return;
+  const container = document.getElementById("requestsContainer");
+  try {
+    const res = await fetch("http://localhost:5001/api/access/requests", {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!res.ok) throw new Error("Failed to load requests");
+    const data = await res.json();
+    if (!Array.isArray(data) || data.length === 0) {
+      container.innerHTML = '<div class="muted">No pending requests</div>';
+      return;
+    }
+    container.innerHTML = data.map(req => `
+      <div style="padding:12px; background:#f9f9f9; border-radius:8px; margin-bottom:10px;">
+        <strong>Dr. ${req.doctorName || 'Unknown'}</strong><br>
+        <small style="color:#6b7280;">NMC: ${req.doctorNMC || 'N/A'}</small><br>
+        <small style="color:#6b7280;">${req.specialty || ''}</small><br>
+        <small style="color:#6b7280;">${req.hospital || ''}</small><br>
+        <div style="margin-top:8px; display:flex; gap:8px;">
+          <button onclick="handleRequest('${req._id}', 'approved')" style="background:#00c6a7; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer;">Approve</button>
+          <button onclick="handleRequest('${req._id}', 'rejected')" style="background:#ef4444; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer;">Reject</button>
+        </div>
+      </div>
+    `).join("");
+  } catch (err) {
+    console.error(err);
+    container.innerHTML = '<div class="muted">Error loading requests</div>';
+  }
+}
+
+async function handleRequest(id, action) {
+  const token = localStorage.getItem("token");
+  if (!token) return;
+  try {
+    const res = await fetch("http://localhost:5001/api/access/respond", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+      body: JSON.stringify({ requestId: id, action })
+    });
+    const data = await res.json();
+    alert(data.message || "Action completed");
+    loadRequests();
+  } catch (err) {
+    console.error(err);
+    alert("Failed to update request");
+  }
+}
+loadRequests();
+
+/* === Charts === */
+const bpCtx = document.getElementById("bpChart").getContext("2d");
+const weightCtx = document.getElementById("weightChart").getContext("2d");
+const sugarCtx = document.getElementById("sugarChart").getContext("2d");
+let bpData = { labels: [], systolic: [], diastolic: [] };
+let weightData = { labels: [], values: [] };
+let sugarData = { labels: [], values: [] };
+
+const bpChart = new Chart(bpCtx, {
+  type: "line",
+  data: {
+    labels: bpData.labels,
+    datasets: [
+      { label: "Systolic", data: bpData.systolic, borderColor: "#0f7cff", tension: 0.3 },
+      { label: "Diastolic", data: bpData.diastolic, borderColor: "#00c6a7", tension: 0.3 }
+    ]
+  },
+  options: { responsive: true, plugins: { legend: { position: 'top' } } }
+});
+
+const weightChart = new Chart(weightCtx, {
+  type: "line",
+  data: { labels: weightData.labels, datasets: [{ label: "Weight (kg)", data: weightData.values, borderColor: "#0f7cff", tension: 0.3 }] },
+  options: { responsive: true, plugins: { legend: { position: 'top' } } }
+});
+
+const sugarChart = new Chart(sugarCtx, {
+  type: "line",
+  data: { labels: sugarData.labels, datasets: [{ label: "Blood Sugar (mg/dL)", data: sugarData.values, borderColor: "#ef4444", tension: 0.3 }] },
+  options: { responsive: true, plugins: { legend: { position: 'top' } } }
+});
+
+/* === Input Handling === */
+document.getElementById("dataForm").addEventListener("submit", function (e) {
+  e.preventDefault();
+  const systolic = document.getElementById("systolic").value;
+  const diastolic = document.getElementById("diastolic").value;
+  const weight = document.getElementById("weight").value;
+  const sugar = document.getElementById("sugar").value;
+  const now = new Date().toLocaleTimeString();
+
+  if (systolic || diastolic) {
+    bpData.labels.push(now);
+    bpData.systolic.push(systolic || null);
+    bpData.diastolic.push(diastolic || null);
+    bpChart.update();
+  }
+  if (weight) {
+    weightData.labels.push(now);
+    weightData.values.push(weight);
+    weightChart.update();
+  }
+  if (sugar) {
+    sugarData.labels.push(now);
+    sugarData.values.push(sugar);
+    sugarChart.update();
+  }
+
+  this.reset();
+});
+
+/* === Medications Save === */
+const medInput = document.getElementById("medicationsInput");
+const medDisplay = document.getElementById("medicationsDisplay");
+document.getElementById("saveMedications").addEventListener("click", () => {
+  const meds = medInput.value.trim();
+  if (meds) {
+    localStorage.setItem("currentMedications", meds);
+    medDisplay.textContent = meds;
+  } else {
+    medDisplay.textContent = "No active medications";
+    localStorage.removeItem("currentMedications");
+  }
+});
+window.addEventListener("load", () => {
+  const saved = localStorage.getItem("currentMedications");
+  if (saved) medDisplay.textContent = saved;
+});
+</script>
+</body>
+</html>

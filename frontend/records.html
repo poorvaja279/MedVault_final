@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MedVault - Records</title>
+  <style>
+    body { margin:0; font-family: Arial, sans-serif; background:#f4faff; color:#071022; }
+    header { display:flex; justify-content:space-between; align-items:center;
+             padding:15px 30px; background: linear-gradient(90deg,#007bff,#00c6b7); color:white; }
+    header .logo { font-weight:bold; font-size:22px; }
+    header .profile { font-weight:600; display:flex; align-items:center; gap:10px; }
+    header .avatar { width:36px; height:36px; border-radius:50%; background:white; color:#007bff;
+                     display:flex; align-items:center; justify-content:center; font-weight:bold; }
+
+    .wrap { display:flex; min-height:calc(100vh - 64px); }
+    .sidebar { width:220px; background:white; border-right:1px solid #eee; padding:16px;
+               display:flex; flex-direction:column; }
+    .sidebar .title { font-weight:700; margin-bottom:12px; }
+    .sidebar .link { padding:10px 12px; margin-bottom:6px; border-radius:8px;
+                     color:#555; text-decoration:none; cursor:pointer; transition:.25s; }
+    .sidebar .link:hover { background:rgba(15,124,255,0.08); color:#007bff; }
+
+    .content { flex:1; padding:30px; display:flex; justify-content:center; align-items:flex-start; }
+
+    .records { width:100%; max-width:700px; background:white; border-radius:10px;
+               padding:30px; box-shadow:0 4px 10px rgba(0,0,0,0.1); }
+    input, button { margin:10px 0; padding:10px; border-radius:6px; border:1px solid #ccc; width:100%; }
+    button { background:#00c6b7; color:white; font-weight:600; border:none; cursor:pointer; }
+    button:hover { background:#009e8b; }
+    ul { list-style:none; padding:0; margin-top:20px; }
+    ul li { background:#f0faff; margin:10px 0; padding:12px 15px; border-radius:8px;
+            display:flex; justify-content:space-between; align-items:center; }
+    ul li a { text-decoration:none; color:#007bff; font-weight:600; }
+    ul li a:hover { text-decoration:underline; }
+    .delete-btn {
+  max-width: 120px;  /* or your preferred width */
+  min-width: 80px;
+  margin-left: 16px;
+  padding: 8px 0;
+  display: inline-block;
+  text-align: center;
+}
+
+  </style>
+</head>
+<body>
+  <!-- header -->
+  <header>
+    <div class="logo">MedVault</div>
+    <div class="profile">
+      <div class="avatar" id="avatar">P</div>
+      <span id="username">Patient</span>
+    </div>
+  </header>
+
+<div class="wrap">
+  <!-- sidebar -->
+  <aside class="sidebar">
+    <div class="title">Menu</div>
+    <a class="link" href="dashboard.html">Dashboard</a>
+    <a class="link" href="emergency.html">Emergency Data</a>
+    <a class="link" href="records.html">Records</a>
+    <a class="link" href="doc-near-me.html">Doc Near Me</a>
+    <a class="link" href="patient-qr.html">QR</a>
+  </aside>
+  
+  <!-- main content -->
+  <main class="content">
+    <section class="records">
+      <h2>Your Records</h2>
+      <form id="uploadForm">
+        <input type="file" id="fileInput" name="file" required>
+        <input type="text" id="fileName" placeholder="Enter a name for this file">
+        <button type="submit">Upload</button>
+      </form>
+      <ul id="recordList"></ul>
+    </section>
+  </main>
+</div>
+
+<script>
+const token = localStorage.getItem("token");
+
+async function fetchRecords() {
+  try {
+    const res = await fetch("http://localhost:5001/api/records", {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if (!res.ok) throw new Error("Failed to load records");
+
+    const records = await res.json();
+    console.log("Fetched records:", records);
+
+    const list = document.getElementById("recordList");
+    list.innerHTML = "";
+
+    if (records.length === 0) {
+      list.innerHTML = "<li>No records found</li>";
+      return;
+    }
+
+    records.forEach(r => {
+      const li = document.createElement("li");
+      li.innerHTML = `
+        <span>${r.fileName} <small>(${new Date(r.uploadedAt).toLocaleString()})</small></span>
+        <a href="${r.url}" target="_blank">Open</a>
+        <button class="delete-btn" data-key="${r.fileKey}">Delete</button>`;
+      list.appendChild(li);
+    });
+  } catch (err) {
+    console.error(err);
+    alert("Error loading records");
+  }
+}
+
+// Call on load
+fetchRecords();
+
+// (keep your upload form code same, maybe call fetchRecords() after upload)
+document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const file = document.getElementById('fileInput').files[0];
+  if (!file) return alert('Please pick a file');
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  try {
+    const res = await fetch('http://localhost:5001/api/records/upload', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Upload failed');
+
+    alert('File uploaded successfully');
+    fetchRecords(); // refresh list
+  } catch (err) {
+    alert(err.message);
+  }
+});
+
+document.getElementById("recordList").addEventListener("click", async (e) => {
+  if (e.target.classList.contains("delete-btn")) {
+   const key = e.target.getAttribute("data-key");
+    if (!key) {
+      alert("Error: Missing file key for deletion.");
+      return;
+    }
+
+    if (!confirm("Are you sure you want to delete this record?"))
+      return;
+    try {
+      const res = await fetch(`http://localhost:5001/api/records/${encodeURIComponent(key)}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Delete failed");
+
+      alert("Record deleted successfully");
+      fetchRecords(); // refresh list
+    } catch (err) {
+      console.error(err);
+      alert("Error deleting record");
+    }
+  }
+});
+
+</script>
+
+</body>
+</html>
