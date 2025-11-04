@@ -93,13 +93,15 @@
 </div>
 
 <script>
+  // Default map location (VIT Vellore)
   const vitVellore = [12.972442, 79.159124];
-  const map = L.map("map").setView(vitVellore, 14);
+  const map = L.map("map").setView(vitVellore, 13);
 
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     attribution: '&copy; OpenStreetMap contributors',
   }).addTo(map);
 
+  // Marker icons
   const blueIcon = new L.Icon({
     iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png",
     shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
@@ -114,20 +116,22 @@
 
   L.marker(vitVellore, { icon: blueIcon }).addTo(map).bindPopup("YOU").openPopup();
 
-  // ✅ FIXED API URL
+  // ✅ API call to backend
   fetch("https://medvault-backend-vfsu.onrender.com/api/doctors")
     .then(res => res.json())
     .then(doctors => {
       doctors.forEach(doc => {
         if (doc.hospitalAddress) {
-          fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(doc.hospitalAddress)}`)
+          // ✅ Nominatim request with required User-Agent
+          fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(doc.hospitalAddress)}`, {
+            headers: { "User-Agent": "MedVaultApp/1.0" }
+          })
             .then(res => res.json())
             .then(data => {
               if (data.length > 0) {
                 const lat = data[0].lat;
                 const lon = data[0].lon;
 
-                // ✅ FIXED doctor.name → doctor.fullName & speciality
                 L.marker([lat, lon], { icon: redIcon })
                   .addTo(map)
                   .bindPopup(`
