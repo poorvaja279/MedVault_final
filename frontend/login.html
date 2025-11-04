@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MedVault | Login</title>
   <style>
-    /* === KEEP ALL PREVIOUS STYLES === */
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin:0; padding:0; background:#f5faff; color:#333; }
     header { background: linear-gradient(90deg, #0d6efd, #20c997); color:white; padding:1rem 2rem; display:flex; align-items:center; justify-content:space-between; }
     header h1 { margin:0; font-size:1.5rem; font-weight:bold; }
@@ -41,14 +40,12 @@
 </header>
 
 <div class="container">
-  <!-- Welcome Section -->
   <div class="welcome" id="welcomeSection">
     <h2 id="welcomeTitle">Welcome Back, Patient!</h2>
     <p id="welcomeText">Login to securely access your MedVault account.</p>
     <img id="welcomeImage" src="https://cdn-icons-png.flaticon.com/512/3774/3774299.png" alt="Healthcare">
   </div>
 
-  <!-- Login Section -->
   <div class="login-section">
     <div class="card">
       <h2>Login</h2>
@@ -59,21 +56,18 @@
         <button id="adminBtn">Admin</button>
       </div>
 
-      <!-- Patient Form -->
       <form id="patientForm" class="active">
         <div class="field"><label>Email</label><input type="email" name="email" required></div>
         <div class="field"><label>Password</label><input type="password" name="password" required></div>
         <button type="submit" class="submit">Login</button>
       </form>
 
-      <!-- Doctor Form -->
       <form id="doctorForm">
         <div class="field"><label>Email</label><input type="email" name="email" required></div>
         <div class="field"><label>Password</label><input type="password" name="password" required></div>
         <button type="submit" class="submit">Login</button>
       </form>
 
-      <!-- Admin Form -->
       <form id="adminForm">
         <div class="field"><label>Admin ID</label><input type="text" name="adminId" required></div>
         <div class="field"><label>Password</label><input type="password" name="password" required></div>
@@ -84,6 +78,8 @@
 </div>
 
 <script>
+const BASE = "https://medvault-backend-vfsu.onrender.com"; // ✅ Render URL
+
 const patientBtn = document.getElementById("patientBtn");
 const doctorBtn = document.getElementById("doctorBtn");
 const adminBtn = document.getElementById("adminBtn");
@@ -124,11 +120,12 @@ adminBtn.addEventListener("click",()=>setActive("admin"));
 
 async function handleLogin(url, body, storageKey, redirect){
   try{
-    const res = await fetch(url, {
+    const res = await fetch(BASE + url, {
       method:"POST",
       headers:{"Content-Type":"application/json"},
       body:JSON.stringify(body)
     });
+
     const data = await res.json();
     if(res.ok){
       localStorage.setItem(storageKey, data.token);
@@ -139,35 +136,26 @@ async function handleLogin(url, body, storageKey, redirect){
     }
   }catch(err){
     console.error(err);
-    alert("❌ Error connecting to server");
+    alert("❌ Server error");
   }
 }
 
 // Patient login
 patientForm.addEventListener("submit", e=>{
   e.preventDefault();
-  const email=patientForm.email.value.trim();
-  const password=patientForm.password.value.trim();
-  //handleLogin("/api/auth/login/patient",{email,password},"patientToken","dashboard.html");
-  handleLogin("/api/auth/login/patient",{email,password},"token","dashboard.html");
+  handleLogin("/api/auth/login/patient",{email:patientForm.email.value,password:patientForm.password.value},"token","dashboard.html");
 });
 
 // Doctor login
 doctorForm.addEventListener("submit", e=>{
   e.preventDefault();
-  const email=doctorForm.email.value.trim();
-  const password=doctorForm.password.value.trim();
-  //handleLogin("/api/auth/login/doctor",{email,password},"doctorToken","doctor_dashboard.html");
-  handleLogin("/api/auth/login/doctor",{email,password},"token","doctor_dashboard.html");
+  handleLogin("/api/auth/login/doctor",{email:doctorForm.email.value,password:doctorForm.password.value},"token","doctor_dashboard.html");
 });
 
 // Admin login
 adminForm.addEventListener("submit", e=>{
   e.preventDefault();
-  const adminId=adminForm.adminId.value.trim();
-  const password=adminForm.password.value.trim();
-  //handleLogin("/api/admin/login",{adminId,password},"adminToken","admin.html");
-  handleLogin("/api/admin/login",{adminId,password},"token","admin.html");
+  handleLogin("/api/admin/login",{adminId:adminForm.adminId.value,password:adminForm.password.value},"token","admin.html");
 });
 </script>
 </body>
