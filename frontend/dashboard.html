@@ -54,6 +54,7 @@
     alert("⚠ You are not logged in!");
     window.location.href = "login.html";
   }
+  const BASE = "https://medvault-backend-vfsu.onrender.com";
 </script>
 
 <div class="topbar">
@@ -137,133 +138,126 @@
 </div>
 
 <script>
-const BASE = "https://medvault-backend-vfsu.onrender.com";
-
-/* === Load profile === */
-async function loadPatientData() {
-  try {
-    const token = localStorage.getItem("token");
-    const res = await fetch(`${BASE}/api/patient/qr`, { headers:{Authorization:`Bearer ${token}`} });
-    const d = await res.json();
-    document.getElementById("patientName").textContent = d.fullName;
-    document.getElementById("patientId").textContent = "ID: " + d.patientId;
-    document.getElementById("profilePic").src = d.profilePic || "https://cdn-icons-png.flaticon.com/512/3774/3774299.png";
-    document.getElementById("dropdownPic").src = d.profilePic || "https://cdn-icons-png.flaticon.com/512/3774/3774299.png";
-  } catch {
-    window.location.href = "login.html";
-  }
-}
-loadPatientData();
-
-/* === Logout === */
+// ====== Logout ======
 document.getElementById("headerLogoutBtn").onclick =
 document.getElementById("logoutBtn").onclick = () => {
   localStorage.removeItem("token");
   window.location.href = "login.html";
 };
 
-/* === Requests === */
+// ====== Load patient info ======
+async function loadPatientData() {
+  const token = localStorage.getItem("token");
+  const res = await fetch(`${BASE}/api/patient/qr`, { headers: { Authorization: `Bearer ${token}` }});
+  const data = await res.json();
+  document.getElementById("patientName").textContent = data.fullName;
+  document.getElementById("patientId").textContent = "ID: " + data.patientId;
+  document.getElementById("profilePic").src = data.profilePic || "https://cdn-icons-png.flaticon.com/512/3774/3774299.png";
+  document.getElementById("dropdownPic").src = data.profilePic || "https://cdn-icons-png.flaticon.com/512/3774/3774299.png";
+}
+loadPatientData();
+
+// ====== Requests ======
 async function loadRequests() {
   const token = localStorage.getItem("token");
-  const container = document.getElementById("requestsContainer");
-  try {
-    const r = await fetch(`${BASE}/api/access/requests`, {headers:{Authorization:`Bearer ${token}`}})
-    const data = await r.json();
-    if (!data.length) return container.innerHTML = "<div class='muted'>No pending requests</div>";
-    container.innerHTML = data.map(x=>`
-      <div style="padding:12px;background:#f9f9f9;border-radius:8px;margin-bottom:10px;">
-        <strong>Dr. ${x.doctorName||'Unknown'}</strong><br>
-        <small>NMC: ${x.doctorNMC||'N/A'}</small><br>
-        <small>${x.specialty||''}</small><br>
-        <small>${x.hospital||''}</small><br>
-        <div style="margin-top:8px;display:flex;gap:8px;">
-          <button onclick="respond('${x._id}','approved')" style="background:#00c6a7;color:#fff;padding:6px 12px;border-radius:6px;">Approve</button>
-          <button onclick="respond('${x._id}','rejected')" style="background:#ef4444;color:#fff;padding:6px 12px;border-radius:6px;">Reject</button>
-        </div>
-      </div>`).join("");
-  } catch { container.innerHTML="Error"; }
+  const res = await fetch(`${BASE}/api/access/requests`, { headers:{Authorization:`Bearer ${token}`}} );
+  const data = await res.json();
+  const c = document.getElementById("requestsContainer");
+  if (!data.length) return c.innerHTML="No pending requests";
+  c.innerHTML = data.map(r=>`
+    <div style='padding:12px;background:#f9f9f9;border-radius:8px;margin-bottom:10px'>
+      <strong>Dr. ${r.doctorName}</strong><br>
+      <small>NMC: ${r.doctorNMC}</small><br>
+      <div style='margin-top:8px;display:flex;gap:8px'>
+        <button onclick="respond('${r._id}','approved')" style='background:#00c6a7;color:#fff;padding:6px 12px;border-radius:6px'>Approve</button>
+        <button onclick="respond('${r._id}','rejected')" style='background:#ef4444;color:#fff;padding:6px 12px;border-radius:6px'>Reject</button>
+      </div>
+    </div>`).join("");
 }
 async function respond(id, action){
   const token = localStorage.getItem("token");
   await fetch(`${BASE}/api/access/respond`,{
-    method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},
+    method:"POST", headers:{ "Content-Type":"application/json", Authorization:`Bearer ${token}` },
     body:JSON.stringify({requestId:id,action})
   });
   loadRequests();
 }
 loadRequests();
 
-/* === Charts setup === */
-let bpData={labels:[],s:[],d:[]}, wData={labels:[],v:[]}, sData={labels:[],v:[]};
+// ====== Charts ======
+const bpCtx=document.getElementById("bpChart").getContext("2d");
+const weightCtx=document.getElementById("weightChart").getContext("2d");
+const sugarCtx=document.getElementById("sugarChart").getContext("2d");
 
-const bpChart=new Chart(bpChart, {type:"line",data:{labels:bpData.labels,datasets:[
-  {label:"Systolic",data:bpData.s,borderColor:"#0f7cff"},
-  {label:"Diastolic",data:bpData.d,borderColor:"#00c6a7"}
+let bpChart=new Chart(bpCtx,{type:"line",data:{labels:[],datasets:[
+  {label:"Systolic",data:[],borderColor:"#0f7cff"},
+  {label:"Diastolic",data:[],borderColor:"#00c6a7"}
 ]}});
 
-const weightChart=new Chart(weightChart,{type:"line",data:{labels:wData.labels,datasets:[
-  {label:"Weight (kg)",data:wData.v,borderColor:"#0f7cff"}
+let weightChart=new Chart(weightCtx,{type:"line",data:{labels:[],datasets:[
+  {label:"Weight (kg)",data:[],borderColor:"#0f7cff"}
 ]}});
 
-const sugarChart=new Chart(sugarChart,{type:"line",data:{labels:sData.labels,datasets:[
-  {label:"Blood Sugar",data:sData.v,borderColor:"#ef4444"}
+let sugarChart=new Chart(sugarCtx,{type:"line",data:{labels:[],datasets:[
+  {label:"Blood Sugar",data:[],borderColor:"#ef4444"}
 ]}});
 
-/* === Load chart data from DB === */
-async function loadHealthData() {
-  const token = localStorage.getItem("token");
-  const pid = document.getElementById("patientId").textContent.replace("ID: ","");
-  const r = await fetch(`${BASE}/api/health/${pid}`,{headers:{Authorization:`Bearer ${token}`}});
-  const data = await r.json();
+// ====== Load DB health history ======
+async function loadHealthData(){
+  const token=localStorage.getItem("token");
+  const pid=document.getElementById("patientId").textContent.replace("ID: ","");
 
-  bpData={labels:[],s:[],d:[]}; wData={labels:[],v:[]}; sData={labels:[],v:[]};
+  const res=await fetch(`${BASE}/api/health/${pid}`,{headers:{Authorization:`Bearer ${token}`}})
+  const data=await res.json();
 
-  data.forEach(x=>{
-    const t=new Date(x.date).toLocaleString();
-    bpData.labels.push(t); bpData.s.push(x.systolic); bpData.d.push(x.diastolic);
-    wData.labels.push(t); wData.v.push(x.weight);
-    sData.labels.push(t); sData.v.push(x.bloodSugar);
-  });
+  const labels=data.map(d=>new Date(d.date).toLocaleString());
+  bpChart.data.labels=labels;
+  bpChart.data.datasets[0].data=data.map(d=>d.systolic);
+  bpChart.data.datasets[1].data=data.map(d=>d.diastolic);
 
-  bpChart.data.labels=bpData.labels; bpChart.data.datasets[0].data=bpData.s; bpChart.data.datasets[1].data=bpData.d;
-  weightChart.data.labels=wData.labels; weightChart.data.datasets[0].data=wData.v;
-  sugarChart.data.labels=sData.labels; sugarChart.data.datasets[0].data=sData.v;
+  weightChart.data.labels=labels;
+  weightChart.data.datasets[0].data=data.map(d=>d.weight);
+
+  sugarChart.data.labels=labels;
+  sugarChart.data.datasets[0].data=data.map(d=>d.bloodSugar);
 
   bpChart.update(); weightChart.update(); sugarChart.update();
 }
-setTimeout(loadHealthData,1000);
+setTimeout(loadHealthData,800);
 
-/* === Save health data to DB === */
-document.getElementById("dataForm").addEventListener("submit", async e=>{
+// ====== Save new health entry ======
+document.getElementById("dataForm").addEventListener("submit",async e=>{
   e.preventDefault();
   const token=localStorage.getItem("token");
   const pid=document.getElementById("patientId").textContent.replace("ID: ","");
-  const systolic=document.getElementById("systolic").value;
-  const diastolic=document.getElementById("diastolic").value;
-  const weight=document.getElementById("weight").value;
-  const sugar=document.getElementById("sugar").value;
 
   await fetch(`${BASE}/api/health/add`,{
-    method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},
-    body:JSON.stringify({patientId:pid,systolic,diastolic,weight,bloodSugar:sugar})
+    method:"POST",
+    headers:{ "Content-Type":"application/json", Authorization:`Bearer ${token}` },
+    body:JSON.stringify({
+      patientId:pid,
+      systolic:systolic.value,
+      diastolic:diastolic.value,
+      weight:weight.value,
+      bloodSugar:sugar.value
+    })
   });
 
   e.target.reset();
   loadHealthData();
 });
 
-/* === Medications Save === */
-const medInput=document.getElementById("medicationsInput");
-const medDisplay=document.getElementById("medicationsDisplay");
+// ====== Medications local save ======
 document.getElementById("saveMedications").onclick=()=>{
-  const m=medInput.value.trim();
-  if(m){localStorage.setItem("currentMedications",m);medDisplay.textContent=m;}
-  else{medDisplay.textContent="No active medications";localStorage.removeItem("currentMedications");}
+  const meds=document.getElementById("medicationsInput").value.trim();
+  localStorage.setItem("currentMedications",meds);
+  document.getElementById("medicationsDisplay").textContent=meds||"No active medications";
 };
 window.onload=()=>{
   const saved=localStorage.getItem("currentMedications");
-  if(saved) medDisplay.textContent=saved;
+  if(saved)document.getElementById("medicationsDisplay").textContent=saved;
 };
 </script>
+
 </body>
 </html>
