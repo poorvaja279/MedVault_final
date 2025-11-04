@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const HealthSchema = new mongoose.Schema({
+const HealthDataSchema = new mongoose.Schema({
   patientId: { type: String, required: true },
   systolic: Number,
   diastolic: Number,
@@ -9,4 +9,5 @@ const HealthSchema = new mongoose.Schema({
   date: { type: Date, default: Date.now }
 });
 
-module.exports = mongoose.model("Health", HealthSchema);
+module.exports = mongoose.model("Healthdatas", HealthDataSchema); 
+// 👆 MUST MATCH your existing model name
