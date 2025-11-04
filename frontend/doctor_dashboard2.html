@@ -25,7 +25,6 @@
             color: #071022;
         }
 
-        /* topbar */
         .topbar {
             height: 64px;
             display: flex;
@@ -85,7 +84,6 @@
             font-weight: 500;
         }
 
-        /* layout */
         .wrap {
             display: flex;
             min-height: calc(100vh - 64px);
@@ -129,7 +127,6 @@
             gap: 20px;
         }
 
-        /* main/records/card */
         .card {
             background: var(--card);
             border-radius: 12px;
@@ -142,22 +139,6 @@
             font-size: 1.05rem;
             font-weight: 600;
             color: var(--blue);
-        }
-
-        .muted {
-            color: var(--muted);
-            font-style: italic;
-        }
-
-        /* Search Result Card */
-        #searchResultCard {
-            display: none;
-            margin-bottom: 20px;
-            border: 2px solid var(--blue);
-        }
-
-        #searchResultCard h3 {
-            margin-bottom: 16px;
         }
 
         .patient-info {
@@ -210,17 +191,9 @@
             color: #fff;
         }
 
-        .btn-primary:hover {
-            background: #005fcc;
-        }
-
         .btn-secondary {
             background: var(--teal);
             color: #fff;
-        }
-
-        .btn-secondary:hover {
-            background: #00a88f;
         }
 
         .btn-success {
@@ -228,16 +201,6 @@
             color: #fff;
         }
 
-        .btn-success:hover {
-            background: #00a88f;
-        }
-
-        .btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        /* table */
         .table-wrap {
             overflow-x: auto;
             margin-top: 8px;
@@ -256,41 +219,11 @@
             font-size: 14px;
         }
 
-        th {
-            font-size: 12px;
-            color: var(--muted);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
         tr:hover {
             background: rgba(15,124,255,0.04);
             cursor: pointer;
         }
 
-        .status {
-            padding: 6px 10px;
-            border-radius: 999px;
-            font-size: 13px;
-            display: inline-block;
-        }
-
-        .status.approved {
-            background: rgba(0,198,167,0.13);
-            color: var(--teal);
-        }
-
-        .status.pending {
-            background: rgba(239,68,68,0.13);
-            color: #ef4444;
-        }
-
-        .status.requested {
-            background: rgba(15,124,255,0.13);
-            color: var(--blue);
-        }
-
-        /* profile dropdown */
         .profile-btn img {
             width: 40px;
             height: 40px;
@@ -305,40 +238,12 @@
             right: 20px;
             background: #fff;
             border-radius: 12px;
-            box-shadow: 0 6px 20px rgba(2,6,23,0.12);
             padding: 16px;
             width: 200px;
             display: none;
             flex-direction: column;
             align-items: center;
             z-index: 1000;
-        }
-
-        .dropdown img {
-            width: 70px;
-            height: 70px;
-            border-radius: 50%;
-            margin-bottom: 10px;
-        }
-
-        .dropdown h4 {
-            margin: 5px 0;
-            font-size: 1rem;
-        }
-
-        .dropdown button {
-            margin-top: 10px;
-            background: var(--blue);
-            color: #fff;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: .2s;
-        }
-
-        .dropdown button:hover {
-            background: #005fcc;
         }
 
         @media (max-width: 900px) {
@@ -357,354 +262,142 @@
         }
     </style>
 </head>
+
 <body>
-    <!-- topbar -->
-    <div class="topbar">
-        <div class="brand">MedVault</div>
-        <div class="search" role="search" aria-label="Search patient by ID">
-            <input id="searchInput" type="text" placeholder="Enter Patient ID" aria-label="Search by Patient ID">
-            <button id="searchBtn">Search</button>
+<div class="topbar">
+    <div class="brand">MedVault</div>
+    <div class="search">
+        <input id="searchInput" type="text" placeholder="Enter Patient ID">
+        <button id="searchBtn">Search</button>
+    </div>
+    <div class="top-actions">
+        <div id="approvedCount" class="chip">Approved: 0</div>
+        <div id="pendingCount" class="chip">Pending: 0</div>
+        <div class="profile-btn" id="profileBtn">
+            <img id="profilePic" src="https://via.placeholder.com/40">
         </div>
-        <div class="top-actions">
-            <div id="approvedCount" class="chip" title="Approved count">Approved: 0</div>
-            <div id="pendingCount" class="chip" title="Pending count">Pending: 0</div>
-            <!-- profile button -->
-            <div class="profile-btn" id="profileBtn">
-                <img id="profilePic" src="https://via.placeholder.com/40" alt="profile">
+    </div>
+
+    <div class="dropdown" id="dropdownMenu">
+        <img id="dropdownPic" src="https://via.placeholder.com/70">
+        <h4 id="doctorName"></h4>
+        <p id="doctorId" style="color:#6b7280;font-size:.9rem;"></p>
+        <button id="logoutBtn">Sign out</button>
+    </div>
+</div>
+
+<div class="wrap">
+    <aside class="sidebar">
+        <div class="title">Menu</div>
+        <a class="link" href="doctor_dashboard.html">Dashboard</a>
+    </aside>
+
+    <main class="content">
+        <section class="card" id="searchResultCard" style="display:none;">
+            <h3>Patient Search Result</h3>
+            <div class="patient-info" id="patientInfoContainer"></div>
+            <div class="action-buttons">
+                <button class="btn btn-primary" id="requestAccessBtn">Request Access</button>
+                <button class="btn btn-secondary" id="requestUploadBtn">Request Upload</button>
             </div>
-        </div>
+        </section>
 
-        <!-- dropdown -->
-        <div class="dropdown" id="dropdownMenu">
-            <img id="dropdownPic" src="https://via.placeholder.com/70" alt="profile">
-            <h4 id="doctorName"></h4>
-            <p id="doctorId" style="color: #6b7280; font-size: 0.9rem;"></p>
-            <button id="logoutBtn">Sign out</button>
-        </div>
-    </div>
+        <section class="card">
+            <h3>Patient Records</h3>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Patient ID</th>
+                            <th>Name</th>
+                            <th>DOB</th>
+                            <th>Blood Group</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+</div>
 
-    <div class="wrap">
-        <!-- sidebar -->
-        <aside class="sidebar">
-            <div class="title">Menu</div>
-            <a class="link" href="doctor_dashboard.html">Dashboard</a>
-        </aside>
-
-        <!-- content -->
-        <main class="content">
-            <!-- Search Result Card -->
-            <section class="card" id="searchResultCard">
-                <h3>Patient Search Result</h3>
-                <div class="patient-info" id="patientInfoContainer">
-                    <!-- Patient info will be inserted here -->
-                </div>
-                <div class="action-buttons">
-                    <button class="btn btn-primary" id="requestAccessBtn">Request to Access Records</button>
-                    <button class="btn btn-secondary" id="requestUploadBtn">Request to Upload Records</button>
-                </div>
-            </section>
-
-            <section class="card">
-                <h3>Patient Records</h3>
-                <div class="table-wrap">
-                    <table id="recordsTable">
-                        <thead>
-                            <tr>
-                                <th>Patient ID</th>
-                                <th>Name</th>
-                               
-                                <th>DOB</th>
-                                <th>Blood Group</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tableBody">
-                            <!-- Rows inserted by JS -->
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-        </main>
-    </div>
-
-    <script>
-        const token = localStorage.getItem('token');
-        if (!token) {
-            alert('Not logged in!');
-            window.location.href = 'login.html';
-        }
-
-        console.log('Token:', token); // Debug log
-
-        // Profile dropdown
-        const profileBtn = document.getElementById('profileBtn');
-        const dropdownMenu = document.getElementById('dropdownMenu');
-        
-        profileBtn.addEventListener('click', () => {
-            dropdownMenu.style.display = dropdownMenu.style.display === 'flex' ? 'none' : 'flex';
-        });
-
-        window.addEventListener('click', (e) => {
-            if (!profileBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
-                dropdownMenu.style.display = 'none';
-            }
-        });
-
-        // Logout
-        document.getElementById('logoutBtn').addEventListener('click', () => {
-            localStorage.removeItem('token');
-            window.location.href = 'login.html';
-        });
-
-        // Load doctor profile
-        fetch('http://localhost:5001/api/doctors/profile', {
-            headers: { 'Authorization': `Bearer ${token}` }
-        })
-        .then(res => res.json())
-        .then(data => {
-            console.log('Doctor profile:', data); // Debug log
-            document.getElementById('doctorName').textContent = data.name;
-            document.getElementById('doctorId').textContent = `NMC: ${data.doctorId}`;
-        })
-        .catch(err => {
-            console.error('Failed to load profile:', err);
-        });
-
-        // Search patient
-        let currentSearchedPatient = null;
-
-        document.getElementById('searchBtn').addEventListener('click', async () => {
-            const patientId = document.getElementById('searchInput').value.trim();
-            console.log('Searching for patient ID:', patientId); // Debug log
-            
-            if (!patientId) {
-                return alert('Enter Patient ID');
-            }
-
-            try {
-                const url = `http://localhost:5001/api/access/search-patient/${patientId}`;
-                console.log('Fetching:', url); // Debug log
-                
-                const res = await fetch(url, {
-                    headers: { 
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                console.log('Response status:', res.status); // Debug log
-                
-                const data = await res.json();
-                console.log('Response data:', data); // Debug log
-                
-                if (res.ok) {
-                    currentSearchedPatient = data.patient;
-                    displaySearchResult(data.patient);
-                } else {
-                    alert(data.error || 'Patient not found');
-                    hideSearchResult();
-                }
-            } catch (err) {
-                console.error('Search error details:', err); // Debug log
-                alert('Error searching patient: ' + err.message);
-            }
-        });
-
-        function displaySearchResult(patient) {
-            const card = document.getElementById('searchResultCard');
-            const container = document.getElementById('patientInfoContainer');
-            
-            const dob = new Date(patient.dob).toLocaleDateString();
-            
-            container.innerHTML = `
-                <div class="info-item">
-                    <span class="info-label">Patient ID</span>
-                    <span class="info-value">${patient.patientId}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Full Name</span>
-                    <span class="info-value">${patient.fullName}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Date of Birth</span>
-                    <span class="info-value">${dob}</span>
-                </div>
-                
-                <div class="info-item">
-                    <span class="info-label">Blood Group</span>
-                    <span class="info-value">${patient.bloodGroup || 'N/A'}</span>
-                </div>
-            `;
-            
-            card.style.display = 'block';
-        }
-
-        function hideSearchResult() {
-            document.getElementById('searchResultCard').style.display = 'none';
-            currentSearchedPatient = null;
-        }
-
-        // Request to Access Records
-        document.getElementById('requestAccessBtn').addEventListener('click', async () => {
-            if (!currentSearchedPatient) {
-                alert('No patient selected');
-                return;
-            }
-            
-            // Disable button to prevent double-click
-            const btn = document.getElementById('requestAccessBtn');
-            btn.disabled = true;
-            
-            console.log('Sending access request for:', currentSearchedPatient.patientId); // Debug log
-            
-            try {
-                const requestBody = { 
-                    patientId: currentSearchedPatient.patientId,
-                    requestType: 'access'
-                };
-                
-                console.log('Request body:', requestBody); // Debug log
-                
-                const res = await fetch('http://localhost:5001/api/access/request', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify(requestBody)
-                });
-                
-                console.log('Access request response status:', res.status); // Debug log
-                
-                const data = await res.json();
-                console.log('Access request response data:', data); // Debug log
-                
-                alert(data.message || data.error);
-                
-                if (res.ok) {
-                    document.getElementById('searchInput').value = '';
-                    hideSearchResult();
-                    loadCounts();
-                }
-            } catch (err) {
-                console.error('Access request error details:', err); // Debug log
-                alert('Error sending access request: ' + err.message);
-            } finally {
-                btn.disabled = false;
-            }
-        });
-
-        // Request to Upload Records
-        document.getElementById('requestUploadBtn').addEventListener('click', async () => {
-            if (!currentSearchedPatient) {
-                alert('No patient selected');
-                return;
-            }
-            
-            // Disable button to prevent double-click
-            const btn = document.getElementById('requestUploadBtn');
-            btn.disabled = true;
-            
-            console.log('Sending upload request for:', currentSearchedPatient.patientId); // Debug log
-            
-            try {
-                const requestBody = { 
-                    patientId: currentSearchedPatient.patientId,
-                    requestType: 'upload'
-                };
-                
-                console.log('Request body:', requestBody); // Debug log
-                
-                const res = await fetch('http://localhost:5001/api/access/request', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify(requestBody)
-                });
-                
-                console.log('Upload request response status:', res.status); // Debug log
-                
-                const data = await res.json();
-                console.log('Upload request response data:', data); // Debug log
-                
-                alert(data.message || data.error);
-                
-                if (res.ok) {
-                    document.getElementById('searchInput').value = '';
-                    hideSearchResult();
-                    loadCounts();
-                }
-            } catch (err) {
-                console.error('Upload request error details:', err); // Debug log
-                alert('Error sending upload request: ' + err.message);
-            } finally {
-                btn.disabled = false;
-            }
-        });
-
-        // Load approved patients
-        function loadPatients() {
-            fetch('http://localhost:5001/api/access/approved', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            })
-            .then(res => res.json())
-            .then(patients => {
-                console.log('Loaded patients:', patients); // Debug log
-                const tbody = document.getElementById('tableBody');
-                if (patients.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 20px; color: #6b7280;">No approved patients yet</td></tr>`;
-                    return;
-                }
-
-                tbody.innerHTML = patients.map(p => `
-                    <tr>
-                        <td>${p.patientId}</td>
-                        <td>${p.fullName}</td>
-                        
-                        <td>${new Date(p.dob).toLocaleDateString()}</td>
-                        <td>${p.bloodGroup || 'N/A'}</td>
-                        <td><button class="btn btn-success" onclick="viewRecords('${p.patientId}')">View Records</button></td>
-                    </tr>
-                `).join('');
-            })
-            .catch(err => {
-                console.error('Error loading patients:', err); // Debug log
-                document.getElementById('tableBody').innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 20px; color: #ef4444;">Error loading patients</td></tr>`;
-            });
-        }
-
-        // Load counts
-        function loadCounts() {
-            fetch('http://localhost:5001/api/access/approved', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            })
-            .then(res => res.json())
-            .then(data => {
-                document.getElementById('approvedCount').textContent = `Approved: ${data.length}`;
-            })
-            .catch(err => console.error('Error loading approved count:', err));
-
-            fetch('http://localhost:5001/api/access/pending-count', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            })
-            .then(res => res.json())
-            .then(data => {
-                document.getElementById('pendingCount').textContent = `Pending: ${data.count}`;
-            })
-            .catch(err => console.error('Error loading pending count:', err));
-        }
-
-        // View records
-       function viewRecords(patientId) {
-  window.location.href = `record1.html?patientId=${patientId}`;
+<script>
+const token = localStorage.getItem("token");
+if (!token) {
+    alert("Not logged in!");
+    window.location.href = "login.html";
 }
 
+// Load doctor profile
+fetch("https://medvault-backend-vfsu.onrender.com/api/doctors/profile", {
+    headers: { Authorization: `Bearer ${token}` }
+})
+.then(res => res.json())
+.then(data => {
+    document.getElementById("doctorName").textContent = data.name;
+    document.getElementById("doctorId").textContent = `NMC: ${data.doctorId}`;
+});
 
-        // Initial load
-        loadPatients();
-        loadCounts();
-    </script>
+// Search
+document.getElementById("searchBtn").addEventListener("click", async () => {
+    const id = document.getElementById("searchInput").value.trim();
+    if (!id) return alert("Enter Patient ID");
+
+    const res = await fetch(`https://medvault-backend-vfsu.onrender.com/api/access/search-patient/${id}`, {
+        headers: { Authorization:`Bearer ${token}` }
+    });
+    const data = await res.json();
+
+    if (res.ok) {
+        currentSearchedPatient = data.patient;
+        showPatient(data.patient);
+    } else alert("Not found");
+});
+
+function showPatient(p) {
+    document.getElementById("searchResultCard").style.display = "block";
+    document.getElementById("patientInfoContainer").innerHTML = `
+        <div class="info-item"><span class="info-label">ID</span><span>${p.patientId}</span></div>
+        <div class="info-item"><span class="info-label">Name</span><span>${p.fullName}</span></div>
+        <div class="info-item"><span class="info-label">DOB</span><span>${new Date(p.dob).toLocaleDateString()}</span></div>
+        <div class="info-item"><span class="info-label">Blood</span><span>${p.bloodGroup || "N/A"}</span></div>
+    `;
+}
+
+// Request access/upload
+async function request(type) {
+    await fetch("https://medvault-backend-vfsu.onrender.com/api/access/request", {
+        method:"POST",
+        headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},
+        body:JSON.stringify({patientId:currentSearchedPatient.patientId,requestType:type})
+    });
+    alert("Request Sent");
+}
+document.getElementById("requestAccessBtn").onclick = ()=>request("access");
+document.getElementById("requestUploadBtn").onclick = ()=>request("upload");
+
+// Load approved
+function loadPatients() {
+    fetch("https://medvault-backend-vfsu.onrender.com/api/access/approved", {
+        headers:{Authorization:`Bearer ${token}`}
+    })
+    .then(res=>res.json())
+    .then(data=>{
+        document.getElementById("tableBody").innerHTML = data.map(p=>`
+            <tr>
+                <td>${p.patientId}</td>
+                <td>${p.fullName}</td>
+                <td>${new Date(p.dob).toLocaleDateString()}</td>
+                <td>${p.bloodGroup||"N/A"}</td>
+                <td><button onclick="view('${p.patientId}')">View</button></td>
+            </tr>`).join("");
+    });
+}
+loadPatients();
+
+function view(id){window.location.href=`record1.html?patientId=${id}`;}
+
+</script>
 </body>
 </html>
