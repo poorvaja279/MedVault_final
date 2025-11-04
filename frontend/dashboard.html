@@ -47,6 +47,7 @@
   </style>
 </head>
 <body>
+
 <script>
   const token = localStorage.getItem("token");
   if (!token) {
@@ -138,172 +139,131 @@
 <script>
 const BASE = "https://medvault-backend-vfsu.onrender.com";
 
-/* === Patient Data === */
+/* === Load profile === */
 async function loadPatientData() {
   try {
     const token = localStorage.getItem("token");
-    if (!token) throw new Error("Not logged in");
-
-    const res = await fetch(`${BASE}/api/patient/qr`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    if (!res.ok) throw new Error("Failed to fetch patient data");
-    const data = await res.json();
-
-    document.getElementById("patientName").textContent = data.fullName;
-    document.getElementById("patientId").textContent = "ID: " + data.patientId;
-    document.getElementById("profilePic").src = data.profilePic || "https://cdn-icons-png.flaticon.com/512/3774/3774299.png";
-    document.getElementById("dropdownPic").src = data.profilePic || "https://cdn-icons-png.flaticon.com/512/3774/3774299.png";
-  } catch (err) {
-    alert(err.message);
+    const res = await fetch(`${BASE}/api/patient/qr`, { headers:{Authorization:`Bearer ${token}`} });
+    const d = await res.json();
+    document.getElementById("patientName").textContent = d.fullName;
+    document.getElementById("patientId").textContent = "ID: " + d.patientId;
+    document.getElementById("profilePic").src = d.profilePic || "https://cdn-icons-png.flaticon.com/512/3774/3774299.png";
+    document.getElementById("dropdownPic").src = d.profilePic || "https://cdn-icons-png.flaticon.com/512/3774/3774299.png";
+  } catch {
     window.location.href = "login.html";
   }
 }
+loadPatientData();
 
 /* === Logout === */
-document.getElementById("headerLogoutBtn").addEventListener("click", () => {
+document.getElementById("headerLogoutBtn").onclick =
+document.getElementById("logoutBtn").onclick = () => {
   localStorage.removeItem("token");
   window.location.href = "login.html";
-});
-document.getElementById("logoutBtn").addEventListener("click", () => {
-  localStorage.removeItem("token");
-  window.location.href = "login.html";
-});
-loadPatientData();
+};
 
 /* === Requests === */
 async function loadRequests() {
   const token = localStorage.getItem("token");
-  if (!token) return;
   const container = document.getElementById("requestsContainer");
-
   try {
-    const res = await fetch(`${BASE}/api/access/requests`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-
-    if (!res.ok) throw new Error("Failed to load requests");
-    const data = await res.json();
-
-    if (!Array.isArray(data) || data.length === 0) {
-      container.innerHTML = '<div class="muted">No pending requests</div>';
-      return;
-    }
-
-    container.innerHTML = data.map(req => `
-      <div style="padding:12px; background:#f9f9f9; border-radius:8px; margin-bottom:10px;">
-        <strong>Dr. ${req.doctorName || 'Unknown'}</strong><br>
-        <small style="color:#6b7280;">NMC: ${req.doctorNMC || 'N/A'}</small><br>
-        <small style="color:#6b7280;">${req.specialty || ''}</small><br>
-        <small style="color:#6b7280;">${req.hospital || ''}</small><br>
-        <div style="margin-top:8px; display:flex; gap:8px;">
-          <button onclick="handleRequest('${req._id}', 'approved')" style="background:#00c6a7; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer;">Approve</button>
-          <button onclick="handleRequest('${req._id}', 'rejected')" style="background:#ef4444; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer;">Reject</button>
+    const r = await fetch(`${BASE}/api/access/requests`, {headers:{Authorization:`Bearer ${token}`}})
+    const data = await r.json();
+    if (!data.length) return container.innerHTML = "<div class='muted'>No pending requests</div>";
+    container.innerHTML = data.map(x=>`
+      <div style="padding:12px;background:#f9f9f9;border-radius:8px;margin-bottom:10px;">
+        <strong>Dr. ${x.doctorName||'Unknown'}</strong><br>
+        <small>NMC: ${x.doctorNMC||'N/A'}</small><br>
+        <small>${x.specialty||''}</small><br>
+        <small>${x.hospital||''}</small><br>
+        <div style="margin-top:8px;display:flex;gap:8px;">
+          <button onclick="respond('${x._id}','approved')" style="background:#00c6a7;color:#fff;padding:6px 12px;border-radius:6px;">Approve</button>
+          <button onclick="respond('${x._id}','rejected')" style="background:#ef4444;color:#fff;padding:6px 12px;border-radius:6px;">Reject</button>
         </div>
-      </div>
-    `).join("");
-
-  } catch (err) {
-    console.error(err);
-    container.innerHTML = '<div class="muted">Error loading requests</div>';
-  }
+      </div>`).join("");
+  } catch { container.innerHTML="Error"; }
 }
-
-async function handleRequest(id, action) {
+async function respond(id, action){
   const token = localStorage.getItem("token");
-  if (!token) return;
-  try {
-    await fetch(`${BASE}/api/access/respond`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-      body: JSON.stringify({ requestId: id, action })
-    });
-    loadRequests();
-  } catch (err) {
-    alert("Failed to update request");
-  }
+  await fetch(`${BASE}/api/access/respond`,{
+    method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},
+    body:JSON.stringify({requestId:id,action})
+  });
+  loadRequests();
 }
 loadRequests();
 
-/* === Charts === */
-const bpCtx = document.getElementById("bpChart").getContext("2d");
-const weightCtx = document.getElementById("weightChart").getContext("2d");
-const sugarCtx = document.getElementById("sugarChart").getContext("2d");
-let bpData = { labels: [], systolic: [], diastolic: [] };
-let weightData = { labels: [], values: [] };
-let sugarData = { labels: [], values: [] };
+/* === Charts setup === */
+let bpData={labels:[],s:[],d:[]}, wData={labels:[],v:[]}, sData={labels:[],v:[]};
 
-const bpChart = new Chart(bpCtx, {
-  type: "line",
-  data: {
-    labels: bpData.labels,
-    datasets: [
-      { label: "Systolic", data: bpData.systolic, borderColor: "#0f7cff", tension: 0.3 },
-      { label: "Diastolic", data: bpData.diastolic, borderColor: "#00c6a7", tension: 0.3 }
-    ]
-  },
-  options: { responsive: true, plugins: { legend: { position: 'top' } } }
-});
+const bpChart=new Chart(bpChart, {type:"line",data:{labels:bpData.labels,datasets:[
+  {label:"Systolic",data:bpData.s,borderColor:"#0f7cff"},
+  {label:"Diastolic",data:bpData.d,borderColor:"#00c6a7"}
+]}});
 
-const weightChart = new Chart(weightCtx, {
-  type: "line",
-  data: { labels: weightData.labels, datasets: [{ label: "Weight (kg)", data: weightData.values, borderColor: "#0f7cff", tension: 0.3 }] },
-  options: { responsive: true, plugins: { legend: { position: 'top' } } }
-});
+const weightChart=new Chart(weightChart,{type:"line",data:{labels:wData.labels,datasets:[
+  {label:"Weight (kg)",data:wData.v,borderColor:"#0f7cff"}
+]}});
 
-const sugarChart = new Chart(sugarCtx, {
-  type: "line",
-  data: { labels: sugarData.labels, datasets: [{ label: "Blood Sugar (mg/dL)", data: sugarData.values, borderColor: "#ef4444", tension: 0.3 }] },
-  options: { responsive: true, plugins: { legend: { position: 'top' } } }
-});
+const sugarChart=new Chart(sugarChart,{type:"line",data:{labels:sData.labels,datasets:[
+  {label:"Blood Sugar",data:sData.v,borderColor:"#ef4444"}
+]}});
 
-/* === Input Handling === */
-document.getElementById("dataForm").addEventListener("submit", function (e) {
+/* === Load chart data from DB === */
+async function loadHealthData() {
+  const token = localStorage.getItem("token");
+  const pid = document.getElementById("patientId").textContent.replace("ID: ","");
+  const r = await fetch(`${BASE}/api/health/${pid}`,{headers:{Authorization:`Bearer ${token}`}});
+  const data = await r.json();
+
+  bpData={labels:[],s:[],d:[]}; wData={labels:[],v:[]}; sData={labels:[],v:[]};
+
+  data.forEach(x=>{
+    const t=new Date(x.date).toLocaleString();
+    bpData.labels.push(t); bpData.s.push(x.systolic); bpData.d.push(x.diastolic);
+    wData.labels.push(t); wData.v.push(x.weight);
+    sData.labels.push(t); sData.v.push(x.bloodSugar);
+  });
+
+  bpChart.data.labels=bpData.labels; bpChart.data.datasets[0].data=bpData.s; bpChart.data.datasets[1].data=bpData.d;
+  weightChart.data.labels=wData.labels; weightChart.data.datasets[0].data=wData.v;
+  sugarChart.data.labels=sData.labels; sugarChart.data.datasets[0].data=sData.v;
+
+  bpChart.update(); weightChart.update(); sugarChart.update();
+}
+setTimeout(loadHealthData,1000);
+
+/* === Save health data to DB === */
+document.getElementById("dataForm").addEventListener("submit", async e=>{
   e.preventDefault();
-  const systolic = document.getElementById("systolic").value;
-  const diastolic = document.getElementById("diastolic").value;
-  const weight = document.getElementById("weight").value;
-  const sugar = document.getElementById("sugar").value;
-  const now = new Date().toLocaleTimeString();
+  const token=localStorage.getItem("token");
+  const pid=document.getElementById("patientId").textContent.replace("ID: ","");
+  const systolic=document.getElementById("systolic").value;
+  const diastolic=document.getElementById("diastolic").value;
+  const weight=document.getElementById("weight").value;
+  const sugar=document.getElementById("sugar").value;
 
-  if (systolic || diastolic) {
-    bpData.labels.push(now);
-    bpData.systolic.push(systolic || null);
-    bpData.diastolic.push(diastolic || null);
-    bpChart.update();
-  }
-  if (weight) {
-    weightData.labels.push(now);
-    weightData.values.push(weight);
-    weightChart.update();
-  }
-  if (sugar) {
-    sugarData.labels.push(now);
-    sugarData.values.push(sugar);
-    sugarChart.update();
-  }
+  await fetch(`${BASE}/api/health/add`,{
+    method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},
+    body:JSON.stringify({patientId:pid,systolic,diastolic,weight,bloodSugar:sugar})
+  });
 
-  this.reset();
+  e.target.reset();
+  loadHealthData();
 });
 
 /* === Medications Save === */
-const medInput = document.getElementById("medicationsInput");
-const medDisplay = document.getElementById("medicationsDisplay");
-document.getElementById("saveMedications").addEventListener("click", () => {
-  const meds = medInput.value.trim();
-  if (meds) {
-    localStorage.setItem("currentMedications", meds);
-    medDisplay.textContent = meds;
-  } else {
-    medDisplay.textContent = "No active medications";
-    localStorage.removeItem("currentMedications");
-  }
-});
-window.addEventListener("load", () => {
-  const saved = localStorage.getItem("currentMedications");
-  if (saved) medDisplay.textContent = saved;
-});
+const medInput=document.getElementById("medicationsInput");
+const medDisplay=document.getElementById("medicationsDisplay");
+document.getElementById("saveMedications").onclick=()=>{
+  const m=medInput.value.trim();
+  if(m){localStorage.setItem("currentMedications",m);medDisplay.textContent=m;}
+  else{medDisplay.textContent="No active medications";localStorage.removeItem("currentMedications");}
+};
+window.onload=()=>{
+  const saved=localStorage.getItem("currentMedications");
+  if(saved) medDisplay.textContent=saved;
+};
 </script>
 </body>
 </html>
