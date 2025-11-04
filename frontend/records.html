@@ -34,14 +34,13 @@
     ul li a { text-decoration:none; color:#007bff; font-weight:600; }
     ul li a:hover { text-decoration:underline; }
     .delete-btn {
-  max-width: 120px;  /* or your preferred width */
-  min-width: 80px;
-  margin-left: 16px;
-  padding: 8px 0;
-  display: inline-block;
-  text-align: center;
-}
-
+      max-width: 120px;
+      min-width: 80px;
+      margin-left: 16px;
+      padding: 8px 0;
+      display: inline-block;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
@@ -80,19 +79,18 @@
 </div>
 
 <script>
+const BASE = "https://medvault-backend-vfsu.onrender.com";
 const token = localStorage.getItem("token");
 
 async function fetchRecords() {
   try {
-    const res = await fetch("http://localhost:5001/api/records", {
-      headers: { Authorization: `Bearer ${token}` }
+    const res = await fetch(`${BASE}/api/records`, {
+      headers: { Authorization: \`Bearer ${token}\` }
     });
 
     if (!res.ok) throw new Error("Failed to load records");
 
     const records = await res.json();
-    console.log("Fetched records:", records);
-
     const list = document.getElementById("recordList");
     list.innerHTML = "";
 
@@ -115,10 +113,10 @@ async function fetchRecords() {
   }
 }
 
-// Call on load
+// Load on page open
 fetchRecords();
 
-// (keep your upload form code same, maybe call fetchRecords() after upload)
+// Upload
 document.getElementById('uploadForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const file = document.getElementById('fileInput').files[0];
@@ -128,48 +126,42 @@ document.getElementById('uploadForm').addEventListener('submit', async (e) => {
   formData.append('file', file);
 
   try {
-    const res = await fetch('http://localhost:5001/api/records/upload', {
+    const res = await fetch(`${BASE}/api/records/upload`, {
       method: 'POST',
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { Authorization: \`Bearer ${token}\` },
       body: formData
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Upload failed');
 
     alert('File uploaded successfully');
-    fetchRecords(); // refresh list
+    fetchRecords();
   } catch (err) {
     alert(err.message);
   }
 });
 
+// Delete
 document.getElementById("recordList").addEventListener("click", async (e) => {
   if (e.target.classList.contains("delete-btn")) {
-   const key = e.target.getAttribute("data-key");
-    if (!key) {
-      alert("Error: Missing file key for deletion.");
-      return;
-    }
+    const key = e.target.getAttribute("data-key");
+    if (!confirm("Delete this record?")) return;
 
-    if (!confirm("Are you sure you want to delete this record?"))
-      return;
     try {
-      const res = await fetch(`http://localhost:5001/api/records/${encodeURIComponent(key)}`, {
+      const res = await fetch(`${BASE}/api/records/${encodeURIComponent(key)}`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: \`Bearer ${token}\` }
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Delete failed");
 
-      alert("Record deleted successfully");
-      fetchRecords(); // refresh list
+      alert("Deleted successfully");
+      fetchRecords();
     } catch (err) {
-      console.error(err);
-      alert("Error deleting record");
+      alert("Error deleting file");
     }
   }
 });
-
 </script>
 
 </body>
