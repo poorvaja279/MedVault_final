@@ -400,7 +400,6 @@
                 </div>
                 <div class="action-buttons">
                     <button class="btn btn-primary" id="requestAccessBtn">Request to Access Records</button>
-                    <!--<button class="btn btn-secondary" id="requestUploadBtn">Request to Upload Records</button>-->
                 </div>
             </section>
 
@@ -412,7 +411,6 @@
                             <tr>
                                 <th>Patient ID</th>
                                 <th>Name</th>
-                               
                                 <th>DOB</th>
                                 <th>Blood Group</th>
                                 <th>Actions</th>
@@ -427,139 +425,186 @@
         </main>
     </div>
 
-  <!-- ✅ UPDATED SCRIPT SECTION ONLY -->
-<script>
-    const token = localStorage.getItem('token');
-    if (!token) {
-        alert('Not logged in!');
-        window.location.href = 'login.html';
-    }
+    <script>
+        const BASE = "https://medvault-backend-vfsu.onrender.com";
 
-    // Load doctor profile
-    fetch('https://medvault-backend-vfsu.onrender.com/api/doctors/profile', {
-        headers: { 'Authorization': `Bearer ${token}` }
-    })
-    .then(res => res.json())
-    .then(data => {
-        document.getElementById('doctorName').textContent = data.name;
-        document.getElementById('doctorId').textContent = `NMC: ${data.doctorId}`;
-    });
-
-    // Search patient
-    let currentSearchedPatient = null;
-
-    document.getElementById('searchBtn').addEventListener('click', async () => {
-        const patientId = document.getElementById('searchInput').value.trim();
-        if (!patientId) return alert('Enter Patient ID');
-
-        try {
-            const url = `https://medvault-backend-vfsu.onrender.com/api/access/search-patient/${patientId}`;
-            
-            const res = await fetch(url, {
-                headers: { 
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            const data = await res.json();
-            if (res.ok) {
-                currentSearchedPatient = data.patient;
-                displaySearchResult(data.patient);
-            } else {
-                alert(data.error || 'Patient not found');
-                hideSearchResult();
-            }
-        } catch (err) {
-            alert('Error searching patient: ' + err.message);
+        const token = localStorage.getItem('token');
+        if (!token) {
+            alert('Not logged in!');
+            window.location.href = 'login.html';
         }
-    });
 
-    // Request to Access Records
-    document.getElementById('requestAccessBtn').addEventListener('click', async () => {
-        if (!currentSearchedPatient) return alert('No patient selected');
-
-        const btn = document.getElementById('requestAccessBtn');
-        btn.disabled = true;
+        // Profile dropdown
+        const profileBtn = document.getElementById('profileBtn');
+        const dropdownMenu = document.getElementById('dropdownMenu');
         
-        try {
-            const res = await fetch('https://medvault-backend-vfsu.onrender.com/api/access/request', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    patientId: currentSearchedPatient.patientId,
-                    requestType: 'access'
-                })
+        profileBtn.addEventListener('click', () => {
+            dropdownMenu.style.display = dropdownMenu.style.display === 'flex' ? 'none' : 'flex';
+        });
+
+        window.addEventListener('click', (e) => {
+            if (!profileBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
+                dropdownMenu.style.display = 'none';
+            }
+        });
+
+        // Logout
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            localStorage.removeItem('token');
+            window.location.href = 'login.html';
+        });
+
+        // Load doctor profile
+        fetch(`${BASE}/api/doctors/profile`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById('doctorName').textContent = data.name;
+            document.getElementById('doctorId').textContent = `NMC: ${data.doctorId}`;
+        })
+        .catch(err => console.error('Failed to load profile:', err));
+
+        // Search patient
+        let currentSearchedPatient = null;
+
+        document.getElementById('searchBtn').addEventListener('click', async () => {
+            const patientId = document.getElementById('searchInput').value.trim();
+            if (!patientId) return alert('Enter Patient ID');
+
+            try {
+                const res = await fetch(`${BASE}/api/access/search-patient/${patientId}`, {
+                    headers: { 
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await res.json();
+                
+                if (res.ok) {
+                    currentSearchedPatient = data.patient;
+                    displaySearchResult(data.patient);
+                } else {
+                    alert(data.error || 'Patient not found');
+                    hideSearchResult();
+                }
+            } catch (err) {
+                alert('Error searching patient: ' + err.message);
+            }
+        });
+
+        function displaySearchResult(patient) {
+            const card = document.getElementById('searchResultCard');
+            const container = document.getElementById('patientInfoContainer');
+            const dob = new Date(patient.dob).toLocaleDateString();
+            
+            container.innerHTML = `
+                <div class="info-item"><span class="info-label">Patient ID</span><span class="info-value">${patient.patientId}</span></div>
+                <div class="info-item"><span class="info-label">Full Name</span><span class="info-value">${patient.fullName}</span></div>
+                <div class="info-item"><span class="info-label">DOB</span><span class="info-value">${dob}</span></div>
+                <div class="info-item"><span class="info-label">Blood Group</span><span class="info-value">${patient.bloodGroup || 'N/A'}</span></div>
+            `;
+            
+            card.style.display = 'block';
+        }
+
+        function hideSearchResult() {
+            document.getElementById('searchResultCard').style.display = 'none';
+            currentSearchedPatient = null;
+        }
+
+        // Request Access
+        document.getElementById('requestAccessBtn').addEventListener('click', async () => {
+            if (!currentSearchedPatient) return alert('No patient selected');
+            
+            const btn = document.getElementById('requestAccessBtn');
+            btn.disabled = true;
+            
+            try {
+                const res = await fetch(`${BASE}/api/access/request`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ 
+                        patientId: currentSearchedPatient.patientId,
+                        requestType: 'access'
+                    })
+                });
+
+                const data = await res.json();
+                alert(data.message || data.error);
+                
+                if (res.ok) {
+                    document.getElementById('searchInput').value = '';
+                    hideSearchResult();
+                    loadCounts();
+                }
+            } catch (err) {
+                alert('Error sending request: ' + err.message);
+            } finally {
+                btn.disabled = false;
+            }
+        });
+
+        // Load approved patients
+        function loadPatients() {
+            fetch(`${BASE}/api/access/approved`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+            .then(res => res.json())
+            .then(patients => {
+                const tbody = document.getElementById('tableBody');
+                if (!patients || patients.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#6b7280">No approved patients yet</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = patients.map(p => `
+                    <tr>
+                        <td>${p.patientId}</td>
+                        <td>${p.fullName}</td>
+                        <td>${new Date(p.dob).toLocaleDateString()}</td>
+                        <td>${p.bloodGroup || 'N/A'}</td>
+                        <td><button class="btn btn-success" onclick="viewRecords('${p.patientId}')">View Records</button></td>
+                    </tr>
+                `).join('');
+            })
+            .catch(err => {
+                document.getElementById('tableBody').innerHTML =
+                    `<tr><td colspan="6" style="text-align:center;color:#ef4444">Error loading patients</td></tr>`;
+            });
+        }
+
+        // Load counts
+        function loadCounts() {
+            fetch(`${BASE}/api/access/approved`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('approvedCount').textContent = `Approved: ${data.length}`;
             });
 
-            const data = await res.json();
-            alert(data.message || data.error);
-
-            if (res.ok) {
-                document.getElementById('searchInput').value = '';
-                hideSearchResult();
-                loadCounts();
-            }
-        } finally {
-            btn.disabled = false;
+            fetch(`${BASE}/api/access/pending-count`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('pendingCount').textContent = `Pending: ${data.count}`;
+            });
         }
-    });
 
-    // Load approved patients
-    function loadPatients() {
-        fetch('https://medvault-backend-vfsu.onrender.com/api/access/approved', {
-            headers: { 'Authorization': `Bearer ${token}` }
-        })
-        .then(res => res.json())
-        .then(patients => {
-            const tbody = document.getElementById('tableBody');
-            if (patients.length === 0) {
-                tbody.innerHTML =
-                    `<tr><td colspan="6" style="text-align:center;padding:20px;">No approved patients yet</td></tr>`;
-                return;
-            }
+        // View Records
+        function viewRecords(patientId) {
+            window.location.href = `record1.html?patientId=${patientId}`;
+        }
 
-            tbody.innerHTML = patients.map(p => `
-                <tr>
-                    <td>${p.patientId}</td>
-                    <td>${p.fullName}</td>
-                    <td>${new Date(p.dob).toLocaleDateString()}</td>
-                    <td>${p.bloodGroup || 'N/A'}</td>
-                    <td><button class="btn btn-success" onclick="viewRecords('${p.patientId}')">View Records</button></td>
-                </tr>
-            `).join('');
-        });
-    }
-
-    // Load counts
-    function loadCounts() {
-        fetch('https://medvault-backend-vfsu.onrender.com/api/access/approved', {
-            headers: { 'Authorization': `Bearer ${token}` }
-        })
-        .then(res => res.json())
-        .then(data => {
-            document.getElementById('approvedCount').textContent = `Approved: ${data.length}`;
-        });
-
-        fetch('https://medvault-backend-vfsu.onrender.com/api/access/pending-count', {
-            headers: { 'Authorization': `Bearer ${token}` }
-        })
-        .then(res => res.json())
-        .then(data => {
-            document.getElementById('pendingCount').textContent = `Pending: ${data.count}`;
-        });
-    }
-
-    function viewRecords(patientId) {
-        window.location.href = `record1.html?patientId=${patientId}`;
-    }
-
-    loadPatients();
-    loadCounts();
-</script>
-
+        // Init
+        loadPatients();
+        loadCounts();
+    </script>
 </body>
 </html>
