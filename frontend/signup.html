@@ -83,7 +83,7 @@
         </div>
         <div class="row">
           <div class="field"><label>Password</label><input type="password" name="password" id="patientPassword" required></div>
-          <div class="field"><label>Confirm Password</label><input type="password" name="confirmPassword" id="patientConfirmPassword" required></div>
+          <div class="field"><label>Confirm Password</label><input type="password" id="patientConfirmPassword" required></div>
         </div>
         <button type="submit" class="submit">Sign Up</button>
         <div class="message" id="patientMessage"></div>
@@ -107,7 +107,7 @@
         </div>
         <div class="row">
           <div class="field"><label>Password</label><input type="password" name="password" id="doctorPassword" required></div>
-          <div class="field"><label>Confirm Password</label><input type="password" name="confirmPassword" id="doctorConfirmPassword" required></div>
+          <div class="field"><label>Confirm Password</label><input type="password" id="doctorConfirmPassword" required></div>
         </div>
         <div class="field"><label>MetaMask Wallet Address (optional)</label><input type="text" name="walletAddress"></div>
         <button type="submit" class="submit">Sign Up</button>
@@ -124,79 +124,4 @@ const doctorBtn = document.getElementById("doctorBtn");
 const patientForm = document.getElementById("patientForm");
 const doctorForm = document.getElementById("doctorForm");
 const welcomeTitle = document.getElementById("welcomeTitle");
-const welcomeText = document.getElementById("welcomeText");
-const welcomeImage = document.getElementById("welcomeImage");
-
-patientBtn.addEventListener("click", () => {
-  patientBtn.classList.add("active");
-  doctorBtn.classList.remove("active");
-  patientForm.classList.add("active");
-  doctorForm.classList.remove("active");
-  welcomeTitle.textContent = "Welcome, Patient!";
-  welcomeText.textContent = "Securely store and share your health records on MedVault.";
-  welcomeImage.src = "https://tse2.mm.bing.net/th/id/OIP.z2gQUbPSFNdhpTAw1ey6kQHaHa?pid=Api&P=0&h=220.jpg";
-});
-
-doctorBtn.addEventListener("click", () => {
-  doctorBtn.classList.add("active");
-  patientBtn.classList.remove("active");
-  doctorForm.classList.add("active");
-  patientForm.classList.remove("active");
-  welcomeTitle.textContent = "Welcome, Doctor!";
-  welcomeText.textContent = "Access patient records securely and provide better care with MedVault.";
-  welcomeImage.src = "https://tse1.mm.bing.net/th/id/OIP.8B8XN6i-rsSqDU7oDiB69wHaIi?pid=Api&P=0&h=220.jpg";
-});
-
-function validatePassword(password) {
-  return /^(?=.*[A-Z])(?=.*[!@#$%^&*(),.?\":{}|<>]).{8,}$/.test(password);
-}
-
-async function submitForm(form, url, messageDiv) {
-  const formData = Object.fromEntries(new FormData(form).entries());
-  if (!validatePassword(formData.password)) {
-    messageDiv.textContent = "Password must be 8+ chars, 1 uppercase & 1 special char!";
-    messageDiv.className = "message error";
-    return;
-  }
-  if (formData.password !== formData.confirmPassword) {
-    messageDiv.textContent = "Passwords do not match!";
-    messageDiv.className = "message error";
-    return;
-  }
-
-  try {
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData)
-    });
-    const result = await res.json();
-    if (res.ok) {
-      messageDiv.textContent = `✅ Registered! Your ID is ${result.patientId || result.doctorId}`;
-      messageDiv.className = "message success";
-      form.reset();
-    } else {
-      messageDiv.textContent = `❌ Error: ${result.error}`;
-      messageDiv.className = "message error";
-    }
-  } catch (err) {
-    console.error(err);
-    messageDiv.textContent = "Server error. Check console.";
-    messageDiv.className = "message error";
-  }
-}
-
-// ✅ Updated signup API URLs
-patientForm.addEventListener("submit", e => { 
-  e.preventDefault(); 
-  submitForm(patientForm, "https://medvault-backend-vfsu.onrender.com/api/auth/signup/patient", document.getElementById("patientMessage")); 
-});
-
-doctorForm.addEventListener("submit", e => { 
-  e.preventDefault(); 
-  submitForm(doctorForm, "https://medvault-backend-vfsu.onrender.com/api/auth/signup/doctor", document.getElementById("doctorMessage")); 
-});
-</script>
-
-</body>
-</html>
+const welcomeText = document.getElementById("welcomeText"
