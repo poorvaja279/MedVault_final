@@ -5,7 +5,7 @@ const pendingDoctorSchema = new mongoose.Schema(
     fullName: { type: String, required: true },
     dob: { type: Date, required: true },
     nmcRegNo: { type: String, required: true },
-    stateMedicalCouncil: { type: String, required: true },
+    stateMedicalCouncil: { type: String },
     hospitalAddress: { type: String, required: true },
     speciality: { type: String, required: true },
     email: { type: String, required: true, unique: true },
