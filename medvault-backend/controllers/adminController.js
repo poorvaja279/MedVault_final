@@ -40,16 +40,30 @@ exports.listPendingDoctors = async (req, res) => {
   }
 };
 
-// 🔹 Approve doctor
+// 🔹 Approve doctor (SAFE VERSION)
 exports.approveDoctor = async (req, res) => {
   try {
     const { pendingDoctorId } = req.params;
     const pendingDoctor = await PendingDoctor.findById(pendingDoctorId);
     if (!pendingDoctor) return res.status(404).json({ error: "Pending doctor not found" });
 
-    // Check if email or phone already exists in verified doctors
-    const exists = await Doctor.findOne({ $or: [{ email: pendingDoctor.email }, { phone: pendingDoctor.phone }] });
-    if (exists) return res.status(400).json({ error: "Doctor with same email or phone exists" });
+    // ✅ Check if doctor already exists (NMC number / email / phone)
+    const existingDoctor = await Doctor.findOne({
+      $or: [
+        { nmcRegNo: pendingDoctor.nmcRegNo },
+        { email: pendingDoctor.email },
+        { phone: pendingDoctor.phone }
+      ]
+    });
+
+    if (existingDoctor) {
+      // ✅ Remove from pending + return existing doctor info instead of error
+      await pendingDoctor.deleteOne();
+      return res.json({
+        message: "Doctor already approved",
+        doctorId: existingDoctor.doctorId
+      });
+    }
 
     // Generate unique doctorId
     const doctorId = await getUniqueDoctorId();
@@ -72,7 +86,7 @@ exports.approveDoctor = async (req, res) => {
     await doctor.save();
     await pendingDoctor.deleteOne();
 
-    res.json({ message: "Doctor approved successfully", doctorId: doctor.doctorId });
+    res.json({ message: "Doctor approved successfully", doctorId });
   } catch (err) {
     console.error("❌ Approve doctor error:", err);
     res.status(500).json({ error: "Server error" });
