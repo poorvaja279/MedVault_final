@@ -12,8 +12,7 @@ const doctorSchema = new mongoose.Schema({
   phone: { type: String, required: true },
   password: { type: String, required: true },
   walletAddress: { type: String },
-  status: { type: String, default: "pending" },
-
-
+  status: { type: String, default: "pending" }
+});
 
 module.exports = mongoose.model("Doctor", doctorSchema);
