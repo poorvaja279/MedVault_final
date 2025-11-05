@@ -177,12 +177,27 @@ async function loadRequests() {
 }
 async function respond(id, action){
   const token = localStorage.getItem("token");
+
+  // existing request approval call
   await fetch(`${BASE}/api/access/respond`,{
-    method:"POST", headers:{ "Content-Type":"application/json", Authorization:`Bearer ${token}` },
+    method:"POST", 
+    headers:{ "Content-Type":"application/json", Authorization:`Bearer ${token}` },
     body:JSON.stringify({requestId:id,action})
   });
+
+  // new: save approval date
+  if (action === "approved") {
+    await fetch(`${BASE}/api/approval/save`, {
+      method:"POST",
+      headers:{ "Content-Type":"application/json", Authorization:`Bearer ${token}` },
+      body:JSON.stringify({ doctorId:id })
+    });
+  }
+
+  // refresh list
   loadRequests();
 }
+
 loadRequests();
 
 // ====== Charts ======
