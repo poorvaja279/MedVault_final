@@ -40,21 +40,28 @@ exports.listPendingDoctors = async (req, res) => {
   }
 };
 
-// 🔹 Approve doctor
+// 🔹 Approve doctor (✅ FIXED)
 exports.approveDoctor = async (req, res) => {
   try {
     const { pendingDoctorId } = req.params;
+
+    // Find pending doctor
     const pendingDoctor = await PendingDoctor.findById(pendingDoctorId);
-    if (!pendingDoctor) return res.status(404).json({ error: "Pending doctor not found" });
+    if (!pendingDoctor)
+      return res.status(404).json({ error: "Pending doctor not found" });
 
-    // Check if email or phone already exists in verified doctors
-    const exists = await Doctor.findOne({ $or: [{ email: pendingDoctor.email }, { phone: pendingDoctor.phone }] });
-    if (exists) return res.status(400).json({ error: "Doctor with same email or phone exists" });
+    // Ensure doctor doesn't already exist
+    const exists = await Doctor.findOne({
+      $or: [{ email: pendingDoctor.email }, { phone: pendingDoctor.phone }]
+    });
+    if (exists)
+      return res.status(400).json({ error: "Doctor with same email or phone already exists" });
 
-    // Generate unique doctorId
+    // Generate doctorId
     const doctorId = await getUniqueDoctorId();
 
-    const doctor = new Doctor({
+    // ✅ Create doctor FIRST
+    const doctor = await Doctor.create({
       doctorId,
       fullName: pendingDoctor.fullName,
       dob: pendingDoctor.dob,
@@ -66,16 +73,20 @@ exports.approveDoctor = async (req, res) => {
       phone: pendingDoctor.phone,
       password: pendingDoctor.password, // Already hashed
       walletAddress: pendingDoctor.walletAddress,
-      status: "verified",
+      status: "verified"
     });
 
-    await doctor.save();
-    await pendingDoctor.deleteOne();
+    // ✅ Only delete pending record AFTER success
+    await PendingDoctor.findByIdAndDelete(pendingDoctorId);
 
-    res.json({ message: "Doctor approved successfully", doctorId: doctor.doctorId });
+    return res.json({
+      message: "Doctor approved successfully",
+      doctorId: doctor.doctorId
+    });
+
   } catch (err) {
     console.error("❌ Approve doctor error:", err);
-    res.status(500).json({ error: "Server error" });
+    return res.status(500).json({ error: err.message });
   }
 };
 
