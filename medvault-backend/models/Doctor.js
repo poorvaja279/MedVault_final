@@ -5,15 +5,20 @@ const doctorSchema = new mongoose.Schema({
   fullName: { type: String, required: true },
   dob: { type: Date },
   nmcRegNo: { type: String, required: true },
-  stateMedicalCouncil: { type: String }, // ✅ make it optional
+  stateMedicalCouncil: { type: String },
   hospitalAddress: { type: String },
   speciality: { type: String },
   email: { type: String, required: true, unique: true },
   phone: { type: String, required: true },
   password: { type: String, required: true },
   walletAddress: { type: String },
-  status: { type: String, default: "pending" }
-});
+  status: { type: String, default: "pending" },
 
+  // ✅ Added to store latitude & longitude
+  location: {
+    lat: { type: Number },
+    lng: { type: Number }
+  }
+});
 
 module.exports = mongoose.model("Doctor", doctorSchema);
