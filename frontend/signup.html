@@ -39,10 +39,9 @@
 <header>
   <h1>MedVault</h1>
   <nav>
-  <a href="signup.html">Sign Up</a>
-  <a href="login.html">Login</a>
-  <a href="contact.html">Contact Us</a>   <!-- ✅ NEW -->
-</nav>
+    <a href="index.html">Home</a>
+    <a href="login.html">Login</a>
+  </nav>
 </header>
 
 <div class="container">
@@ -67,7 +66,7 @@
           <div class="field"><label>Date of Birth</label><input type="date" name="dob" required></div>
         </div>
         <div class="row">
-          <div class="field"><label>Phone Number</label><input type="tel" name="phone" pattern="[0-9]{10}" required></div>
+          <div class="field"><label>Phone Number</label><input type="tel" name="phone" pattern="[0-9]{10}" title="Enter 10-digit phone number" required></div>
           <div class="field"><label>Email</label><input type="email" name="email" required></div>
         </div>
         <div class="row">
@@ -84,7 +83,7 @@
         </div>
         <div class="row">
           <div class="field"><label>Password</label><input type="password" name="password" id="patientPassword" required></div>
-          <div class="field"><label>Confirm Password</label><input type="password" id="patientConfirmPassword" required></div>
+          <div class="field"><label>Confirm Password</label><input type="password" name="confirmPassword" id="patientConfirmPassword" required></div>
         </div>
         <button type="submit" class="submit">Sign Up</button>
         <div class="message" id="patientMessage"></div>
@@ -104,11 +103,11 @@
         <div class="field"><label>Speciality</label><input type="text" name="speciality" required></div>
         <div class="row">
           <div class="field"><label>Email</label><input type="email" name="email" required></div>
-          <div class="field"><label>Phone Number</label><input type="tel" name="phone" pattern="[0-9]{10}" required></div>
+          <div class="field"><label>Phone Number</label><input type="tel" name="phone" pattern="[0-9]{10}" title="Enter 10-digit phone number" required></div>
         </div>
         <div class="row">
           <div class="field"><label>Password</label><input type="password" name="password" id="doctorPassword" required></div>
-          <div class="field"><label>Confirm Password</label><input type="password" id="doctorConfirmPassword" required></div>
+          <div class="field"><label>Confirm Password</label><input type="password" name="confirmPassword" id="doctorConfirmPassword" required></div>
         </div>
         <div class="field"><label>MetaMask Wallet Address (optional)</label><input type="text" name="walletAddress"></div>
         <button type="submit" class="submit">Sign Up</button>
@@ -125,4 +124,83 @@ const doctorBtn = document.getElementById("doctorBtn");
 const patientForm = document.getElementById("patientForm");
 const doctorForm = document.getElementById("doctorForm");
 const welcomeTitle = document.getElementById("welcomeTitle");
-const welcomeText = document.getElementById("welcomeText"
+const welcomeText = document.getElementById("welcomeText");
+const welcomeImage = document.getElementById("welcomeImage");
+
+// ✅ Tab Switch
+patientBtn.onclick = () => {
+  patientBtn.classList.add("active");
+  doctorBtn.classList.remove("active");
+  patientForm.classList.add("active");
+  doctorForm.classList.remove("active");
+  welcomeTitle.textContent = "Welcome, Patient!";
+  welcomeText.textContent = "Securely store and share your health records on MedVault.";
+  welcomeImage.src = "https://tse2.mm.bing.net/th/id/OIP.z2gQUbPSFNdhpTAw1ey6kQHaHa?pid=Api&P=0&h=220.jpg";
+};
+
+doctorBtn.onclick = () => {
+  doctorBtn.classList.add("active");
+  patientBtn.classList.remove("active");
+  doctorForm.classList.add("active");
+  patientForm.classList.remove("active");
+  welcomeTitle.textContent = "Welcome, Doctor!";
+  welcomeText.textContent = "Access patient records securely and provide better care.";
+  welcomeImage.src = "https://cdn-icons-png.flaticon.com/512/387/387561.png";
+};
+
+// ✅ Password Validation
+function validatePassword(password) {
+  return /^(?=.*[A-Z])(?=.*[!@#$%^&*(),.?":{}|<>]).{8,}$/.test(password);
+}
+
+// ✅ Submit Handler
+async function submitForm(form, url, messageDiv) {
+  const formData = Object.fromEntries(new FormData(form).entries());
+
+  if (!validatePassword(formData.password)) {
+    messageDiv.textContent = "Password must have 8+ chars, 1 uppercase, 1 special char!";
+    messageDiv.className = "message error";
+    return;
+  }
+  if (formData.password !== formData.confirmPassword) {
+    messageDiv.textContent = "Passwords do not match!";
+    messageDiv.className = "message error";
+    return;
+  }
+
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(formData)
+    });
+
+    const result = await res.json();
+    if (res.ok) {
+      messageDiv.textContent = `✅ Registered! Your ID is ${result.patientId || result.doctorId}`;
+      messageDiv.className = "message success";
+      form.reset();
+    } else {
+      messageDiv.textContent = `❌ ${result.error}`;
+      messageDiv.className = "message error";
+    }
+  } catch (err) {
+    messageDiv.textContent = "Server error!";
+    messageDiv.className = "message error";
+  }
+}
+
+// ✅ API Submit
+patientForm.addEventListener("submit", e => {
+  e.preventDefault();
+  submitForm(patientForm, "http://localhost:5001/api/auth/signup/patient", document.getElementById("patientMessage"));
+});
+
+doctorForm.addEventListener("submit", e => {
+  e.preventDefault();
+  submitForm(doctorForm, "http://localhost:5001/api/auth/signup/doctor", document.getElementById("doctorMessage"));
+});
+</script>
+
+</body>
+</html>
