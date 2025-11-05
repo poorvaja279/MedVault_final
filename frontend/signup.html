@@ -66,7 +66,7 @@
           <div class="field"><label>Date of Birth</label><input type="date" name="dob" required></div>
         </div>
         <div class="row">
-          <div class="field"><label>Phone Number</label><input type="tel" name="phone" pattern="[0-9]{10}" title="Enter 10-digit phone number" required></div>
+          <div class="field"><label>Phone Number</label><input type="tel" name="phone" pattern="[0-9]{10}" required></div>
           <div class="field"><label>Email</label><input type="email" name="email" required></div>
         </div>
         <div class="row">
@@ -103,7 +103,7 @@
         <div class="field"><label>Speciality</label><input type="text" name="speciality" required></div>
         <div class="row">
           <div class="field"><label>Email</label><input type="email" name="email" required></div>
-          <div class="field"><label>Phone Number</label><input type="tel" name="phone" pattern="[0-9]{10}" title="Enter 10-digit phone number" required></div>
+          <div class="field"><label>Phone Number</label><input type="tel" name="phone" pattern="[0-9]{10}" required></div>
         </div>
         <div class="row">
           <div class="field"><label>Password</label><input type="password" name="password" id="doctorPassword" required></div>
@@ -113,28 +113,19 @@
         <button type="submit" class="submit">Sign Up</button>
         <div class="message" id="doctorMessage"></div>
       </form>
-
     </div>
   </div>
 </div>
 
 <script>
-const patientBtn = document.getElementById("patientBtn");
-const doctorBtn = document.getElementById("doctorBtn");
-const patientForm = document.getElementById("patientForm");
-const doctorForm = document.getElementById("doctorForm");
-const welcomeTitle = document.getElementById("welcomeTitle");
-const welcomeText = document.getElementById("welcomeText");
-const welcomeImage = document.getElementById("welcomeImage");
-
-// ✅ Tab Switch
+// ✅ Toggle Tabs
 patientBtn.onclick = () => {
   patientBtn.classList.add("active");
   doctorBtn.classList.remove("active");
   patientForm.classList.add("active");
   doctorForm.classList.remove("active");
   welcomeTitle.textContent = "Welcome, Patient!";
-  welcomeText.textContent = "Securely store and share your health records on MedVault.";
+  welcomeText.textContent = "Securely store health records on MedVault.";
   welcomeImage.src = "https://tse2.mm.bing.net/th/id/OIP.z2gQUbPSFNdhpTAw1ey6kQHaHa?pid=Api&P=0&h=220.jpg";
 };
 
@@ -148,31 +139,37 @@ doctorBtn.onclick = () => {
   welcomeImage.src = "https://cdn-icons-png.flaticon.com/512/387/387561.png";
 };
 
-// ✅ Password Validation
+// ✅ Auto switch Localhost <-> Render
+const API_BASE_URL =
+  location.hostname.includes("localhost")
+    ? "http://localhost:5001"
+    : "https://medvault-backend.onrender.com";
+
+// ✅ Password rules
 function validatePassword(password) {
   return /^(?=.*[A-Z])(?=.*[!@#$%^&*(),.?":{}|<>]).{8,}$/.test(password);
 }
 
-// ✅ Submit Handler
-async function submitForm(form, url, messageDiv) {
-  const formData = Object.fromEntries(new FormData(form).entries());
+// ✅ Form Submit Function
+async function submitForm(form, endpoint, messageDiv) {
+  const data = Object.fromEntries(new FormData(form).entries());
 
-  if (!validatePassword(formData.password)) {
-    messageDiv.textContent = "Password must have 8+ chars, 1 uppercase, 1 special char!";
+  if (!validatePassword(data.password)) {
+    messageDiv.textContent = "Password must be 8+ chars, 1 Uppercase, 1 Special!";
     messageDiv.className = "message error";
     return;
   }
-  if (formData.password !== formData.confirmPassword) {
+  if (data.password !== data.confirmPassword) {
     messageDiv.textContent = "Passwords do not match!";
     messageDiv.className = "message error";
     return;
   }
 
   try {
-    const res = await fetch(url, {
+    const res = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData)
+      body: JSON.stringify(data)
     });
 
     const result = await res.json();
@@ -184,21 +181,21 @@ async function submitForm(form, url, messageDiv) {
       messageDiv.textContent = `❌ ${result.error}`;
       messageDiv.className = "message error";
     }
-  } catch (err) {
-    messageDiv.textContent = "Server error!";
+  } catch (e) {
+    messageDiv.textContent = "Server error! Try again.";
     messageDiv.className = "message error";
   }
 }
 
-// ✅ API Submit
+// ✅ Attach submit handlers
 patientForm.addEventListener("submit", e => {
   e.preventDefault();
-  submitForm(patientForm, "http://localhost:5001/api/auth/signup/patient", document.getElementById("patientMessage"));
+  submitForm(patientForm, "/api/auth/signup/patient", patientMessage);
 });
 
 doctorForm.addEventListener("submit", e => {
   e.preventDefault();
-  submitForm(doctorForm, "http://localhost:5001/api/auth/signup/doctor", document.getElementById("doctorMessage"));
+  submitForm(doctorForm, "/api/auth/signup/doctor", doctorMessage);
 });
 </script>
 
