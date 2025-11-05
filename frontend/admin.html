@@ -22,61 +22,64 @@
   </style>
 </head>
 <body>
-  <header>
-    <h1>MedVault Admin</h1>
-    <nav>
-      <a href="#" id="logoutBtn">Logout</a>
-    </nav>
-  </header>
 
-  <main>
-    <h2>Pending Doctor Registrations</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>Full Name</th>
-          <th>NMC Reg No</th>
-          <th>State Council</th>
-          <th>Hospital Address</th>
-          <th>Speciality</th>
-          <th>Email</th>
-          <th>Phone</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody id="pendingDoctorsTableBody">
-        <tr><td colspan="8" style="text-align:center;">Loading...</td></tr>
-      </tbody>
-    </table>
-  </main>
+<header>
+  <h1>MedVault Admin</h1>
+  <nav><a href="#" id="logoutBtn">Logout</a></nav>
+</header>
+
+<main>
+  <h2>Pending Doctor Registrations</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Full Name</th>
+        <th>NMC Reg No</th>
+        <th>State Council</th>
+        <th>Hospital Address</th>
+        <th>Speciality</th>
+        <th>Email</th>
+        <th>Phone</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+
+    <tbody id="pendingDoctorsTableBody">
+      <tr><td colspan="8" style="text-align:center;">Loading...</td></tr>
+    </tbody>
+  </table>
+</main>
 
 <script>
-// ✅ updated base URL for Render
-const API_BASE = "https://medvault-backend-vfsu.onrender.com/api/admin";
+// ✅ Auto-detect backend (local vs Render)
+const API_BASE = location.hostname.includes("localhost")
+  ? "http://localhost:5001/api/admin"
+  : "https://medvault-backend-vfsu.onrender.com/api/admin";
 
-const tableBody = document.getElementById("pendingDoctorsTableBody");
-const logoutBtn = document.getElementById("logoutBtn");
-const token = localStorage.getItem("token");
+// ✅ Correct token key
+const token = localStorage.getItem("adminToken");
 
-// Protect route
 if (!token) {
   alert("⚠️ Please log in as admin first.");
-  window.location.href = "login.html";
+  window.location.href = "admin-login.html";
 }
 
-// Logout
-logoutBtn.addEventListener("click", () => {
-  localStorage.removeItem("token");
-  alert("✅ Logged out successfully!");
-  window.location.href = "login.html";
-});
+const tableBody = document.getElementById("pendingDoctorsTableBody");
 
-// Fetch pending doctors
+// ✅ Logout
+document.getElementById("logoutBtn").onclick = () => {
+  localStorage.removeItem("adminToken");
+  alert("✅ Logged out");
+  window.location.href = "admin-login.html";
+};
+
+// ✅ Fetch pending doctors
 async function fetchPendingDoctors() {
   try {
     const res = await fetch(`${API_BASE}/pending-doctors`, {
-      headers: { "Authorization": "Bearer " + token }
+      headers: { "Authorization": `Bearer ${token}` }
     });
+
     const data = await res.json();
     tableBody.innerHTML = "";
 
@@ -86,22 +89,21 @@ async function fetchPendingDoctors() {
     }
 
     data.forEach(doc => {
-      const tr = document.createElement("tr");
-      tr.id = `row-${doc._id}`;
-      tr.innerHTML = `
-        <td>${doc.fullName}</td>
-        <td>${doc.nmcRegNo}</td>
-        <td>${doc.stateMedicalCouncil || "-"}</td>
-        <td>${doc.hospitalAddress}</td>
-        <td>${doc.speciality}</td>
-        <td>${doc.email}</td>
-        <td>${doc.phone}</td>
-        <td>
-          <button class="approve" onclick="approveDoctor('${doc._id}')">✅ Approve</button>
-          <button class="reject" onclick="rejectDoctor('${doc._id}')">❌ Reject</button>
-        </td>
+      tableBody.innerHTML += `
+        <tr id="row-${doc._id}">
+          <td>${doc.fullName}</td>
+          <td>${doc.nmcRegNo}</td>
+          <td>${doc.stateMedicalCouncil || "-"}</td>
+          <td>${doc.hospitalAddress}</td>
+          <td>${doc.speciality}</td>
+          <td>${doc.email}</td>
+          <td>${doc.phone}</td>
+          <td>
+            <button class="approve" onclick="approveDoctor('${doc._id}')">✅ Approve</button>
+            <button class="reject" onclick="rejectDoctor('${doc._id}')">❌ Reject</button>
+          </td>
+        </tr>
       `;
-      tableBody.appendChild(tr);
     });
   } catch (err) {
     console.error(err);
@@ -115,13 +117,11 @@ async function approveDoctor(id) {
 
   const res = await fetch(`${API_BASE}/approve-doctor/${id}`, {
     method: "POST",
-    headers: { "Authorization": "Bearer " + token }
+    headers: { "Authorization": `Bearer ${token}` }
   });
+
   const result = await res.json();
-
-  alert(result.message || "Doctor approved");
-
-  // ✅ Remove row instantly
+  alert(result.message || "Approved");
   document.getElementById(`row-${id}`)?.remove();
 }
 
@@ -131,17 +131,15 @@ async function rejectDoctor(id) {
 
   const res = await fetch(`${API_BASE}/reject-doctor/${id}`, {
     method: "POST",
-    headers: { "Authorization": "Bearer " + token }
+    headers: { "Authorization": `Bearer ${token}` }
   });
+
   const result = await res.json();
-
-  alert(result.message || "Doctor rejected");
-
-  // ✅ Remove row instantly
+  alert(result.message || "Rejected");
   document.getElementById(`row-${id}`)?.remove();
 }
 
-// Load data
+// ✅ Load data
 fetchPendingDoctors();
 </script>
 </body>
