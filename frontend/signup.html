@@ -48,7 +48,7 @@
   <div class="welcome" id="welcomeSection">
     <h2 id="welcomeTitle">Welcome, Patient!</h2>
     <p id="welcomeText">Securely store and share your health records on MedVault.</p>
-    <img id="welcomeImage" src="https://tse2.mm.bing.net/th/id/OIP.z2gQUbPSFNdhpTAw1ey6kQHaHa?pid=Api&P=0&h=220.jpg" alt="Healthcare">
+    <img id="welcomeImage" src="https://tse2.mm.bing.net/th/id/OIP.z2gQUbPSFNdhpTAw1ey6kQHaHa?pid=Api&P=0&h=220" alt="Healthcare">
   </div>
 
   <div class="signup-section">
@@ -113,20 +113,29 @@
         <button type="submit" class="submit">Sign Up</button>
         <div class="message" id="doctorMessage"></div>
       </form>
+
     </div>
   </div>
 </div>
 
 <script>
-// ✅ Toggle Tabs
+const patientBtn = document.getElementById("patientBtn");
+const doctorBtn = document.getElementById("doctorBtn");
+const patientForm = document.getElementById("patientForm");
+const doctorForm = document.getElementById("doctorForm");
+const welcomeTitle = document.getElementById("welcomeTitle");
+const welcomeText = document.getElementById("welcomeText");
+const welcomeImage = document.getElementById("welcomeImage");
+
+// ✅ Toggle
 patientBtn.onclick = () => {
   patientBtn.classList.add("active");
   doctorBtn.classList.remove("active");
   patientForm.classList.add("active");
   doctorForm.classList.remove("active");
   welcomeTitle.textContent = "Welcome, Patient!";
-  welcomeText.textContent = "Securely store health records on MedVault.";
-  welcomeImage.src = "https://tse2.mm.bing.net/th/id/OIP.z2gQUbPSFNdhpTAw1ey6kQHaHa?pid=Api&P=0&h=220.jpg";
+  welcomeText.textContent = "Securely store your medical records.";
+  welcomeImage.src = "https://tse2.mm.bing.net/th/id/OIP.z2gQUbPSFNdhpTAw1ey6kQHaHa?pid=Api&P=0&h=220";
 };
 
 doctorBtn.onclick = () => {
@@ -135,32 +144,30 @@ doctorBtn.onclick = () => {
   doctorForm.classList.add("active");
   patientForm.classList.remove("active");
   welcomeTitle.textContent = "Welcome, Doctor!";
-  welcomeText.textContent = "Access patient records securely and provide better care.";
+  welcomeText.textContent = "Register to treat patients & access records.";
   welcomeImage.src = "https://cdn-icons-png.flaticon.com/512/387/387561.png";
 };
 
-// ✅ Auto detect Localhost or Render
+// ✅ Backend URL Auto select
 const API_BASE_URL =
   location.hostname.includes("localhost")
     ? "http://localhost:5001"
     : "https://medvault-backend-vfsu.onrender.com";
 
-// ✅ Password rules
+// ✅ Password rule
 function validatePassword(password) {
   return /^(?=.*[A-Z])(?=.*[!@#$%^&*(),.?":{}|<>]).{8,}$/.test(password);
 }
 
-// ✅ Form Submit Function
-async function
-submitForm(form, endpoint, messageDiv) {
+// ✅ SUBMIT function (fixed)
+async function submitForm(form, endpoint, messageDiv) {
   const data = Object.fromEntries(new FormData(form).entries());
 
   if (!validatePassword(data.password)) {
-    messageDiv.textContent = "Password must be 8+ chars, include 1 uppercase & 1 special symbol!";
+    messageDiv.textContent = "Password must have 8+ chars, 1 uppercase & 1 special symbol!";
     messageDiv.className = "message error";
     return;
   }
-
   if (data.password !== data.confirmPassword) {
     messageDiv.textContent = "Passwords do not match!";
     messageDiv.className = "message error";
@@ -176,22 +183,20 @@ submitForm(form, endpoint, messageDiv) {
 
     const result = await res.json();
 
-    if (res.ok) {
-      messageDiv.textContent = `✅ Registered! Your ID is ${result.patientId || result.doctorId}`;
-      messageDiv.className = "message success";
-      form.reset();
-    } else {
-      messageDiv.textContent = `❌ ${result.error}`;
-      messageDiv.className = "message error";
-    }
+    messageDiv.textContent = res.ok
+      ? `✅ Registered! Your ID: ${result.patientId || result.doctorId}`
+      : `❌ ${result.error}`;
+
+    messageDiv.className = res.ok ? "message success" : "message error";
+    if (res.ok) form.reset();
 
   } catch (e) {
-    messageDiv.textContent = "🚨 Server not responding!";
+    messageDiv.textContent = "🚨 Server unreachable!";
     messageDiv.className = "message error";
   }
 }
 
-// ✅ Attach submit handlers
+// ✅ Add submit listeners
 patientForm.addEventListener("submit", e => {
   e.preventDefault();
   submitForm(patientForm, "/api/auth/signup/patient", patientMessage);
