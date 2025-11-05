@@ -5,7 +5,6 @@ const Doctor = require("../models/Doctor");
 const PendingDoctor = require("../models/PendingDoctor");
 const { generatePatientId, generateDoctorId } = require("../utils/idGenerator");
 const verifyDoctorNMC = require("../utils/nmcVerifier");
-const axios = require("axios"); // ✅ add this
 
 // Helper to generate unique patientId
 async function getUniquePatientId() {
@@ -56,8 +55,7 @@ exports.registerPatient = async (req, res) => {
   }
 };
 
-// 🌟 Doctor Signup
-// 🌟 Doctor Signup
+// 🌟 Doctor Signup (NO LOCATION)
 exports.registerDoctor = async (req, res) => {
   try {
     const { fullName, dob, nmcRegNo, hospitalAddress, speciality, email, phone, password, walletAddress } = req.body;
@@ -65,27 +63,7 @@ exports.registerDoctor = async (req, res) => {
       return res.status(400).json({ error: "Missing required fields" });
 
     const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Verify using mock NMC (only checks fullName + regNo)
     const verifyResult = await verifyDoctorNMC(nmcRegNo, fullName);
-
-    // ✅ Geocode hospitalAddress → lat/lng
-    let location = {};
-    if (hospitalAddress) {
-      try {
-        const geoRes = await axios.get(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(hospitalAddress)}`,
-          { headers: { "User-Agent": "MedVaultApp" }} // Nominatim requirement
-        );
-
-        if (geoRes.data.length > 0) {
-          location.lat = parseFloat(geoRes.data[0].lat);
-          location.lng = parseFloat(geoRes.data[0].lon);
-        }
-      } catch (e) {
-        console.log("❌ Geocoding failed:", e.message);
-      }
-    }
 
     if (verifyResult.success) {
       const doctorId = await getUniqueDoctorId();
@@ -95,8 +73,7 @@ exports.registerDoctor = async (req, res) => {
         hospitalAddress, speciality, email, phone,
         password: hashedPassword,
         walletAddress,
-        status: "verified",
-        location   // ✅ save lat/lng here
+        status: "verified"
       });
 
       await doctor.save();
@@ -118,8 +95,6 @@ exports.registerDoctor = async (req, res) => {
     res.status(400).json({ error: err.message });
   }
 };
-
-
 
 // 🌟 Patient Login
 exports.loginPatient = async (req, res) => {
