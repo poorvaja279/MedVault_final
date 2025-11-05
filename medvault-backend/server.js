@@ -20,7 +20,6 @@ app.use("/api/admin", require("./routes/admin"));
 app.use("/api/doctors", require("./routes/doctor"));
 app.use("/api/patient", require("./routes/patientQr")); // Patient QR route
 app.use("/api/access", accessRoutes); // doctor access
-app.use("/api/approval", require("./routes/approval"));
 
 // Records routes
 const recordsRoutes = require("./routes/records.routes");
