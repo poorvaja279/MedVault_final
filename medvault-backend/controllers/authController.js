@@ -57,6 +57,7 @@ exports.registerPatient = async (req, res) => {
 };
 
 // 🌟 Doctor Signup
+// 🌟 Doctor Signup
 exports.registerDoctor = async (req, res) => {
   try {
     const { fullName, dob, nmcRegNo, hospitalAddress, speciality, email, phone, password, walletAddress } = req.body;
@@ -68,31 +69,56 @@ exports.registerDoctor = async (req, res) => {
     // Verify using mock NMC (only checks fullName + regNo)
     const verifyResult = await verifyDoctorNMC(nmcRegNo, fullName);
 
+    // ✅ Geocode hospitalAddress → lat/lng
+    let location = {};
+    if (hospitalAddress) {
+      try {
+        const geoRes = await axios.get(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(hospitalAddress)}`,
+          { headers: { "User-Agent": "MedVaultApp" }} // Nominatim requirement
+        );
+
+        if (geoRes.data.length > 0) {
+          location.lat = parseFloat(geoRes.data[0].lat);
+          location.lng = parseFloat(geoRes.data[0].lon);
+        }
+      } catch (e) {
+        console.log("❌ Geocoding failed:", e.message);
+      }
+    }
+
     if (verifyResult.success) {
       const doctorId = await getUniqueDoctorId();
       const doctor = new Doctor({
         doctorId,
         fullName, dob, nmcRegNo,
-        hospitalAddress, speciality, email, phone, password: hashedPassword,
-        walletAddress, status: "verified",
+        hospitalAddress, speciality, email, phone,
+        password: hashedPassword,
+        walletAddress,
+        status: "verified",
+        location   // ✅ save lat/lng here
       });
+
       await doctor.save();
       return res.status(201).json({ doctorId: doctor.doctorId, message: "Doctor verified and registered" });
     } else {
       const pendingDoctor = new PendingDoctor({
         fullName, dob, nmcRegNo, hospitalAddress, speciality,
         email, phone, password: hashedPassword, walletAddress,
-        submittedAt: new Date(), verificationReason: verifyResult.reason,
+        submittedAt: new Date(), verificationReason: verifyResult.reason
       });
+
       await pendingDoctor.save();
       return res.status(201).json({ message: "Doctor registration pending admin approval", reason: verifyResult.reason });
     }
+
   } catch (err) {
     console.error("❌ Doctor registration error:", err);
     if (err.code === 11000) return res.status(400).json({ error: Object.keys(err.keyValue)[0] + " already exists" });
     res.status(400).json({ error: err.message });
   }
 };
+
 
 
 // 🌟 Patient Login
