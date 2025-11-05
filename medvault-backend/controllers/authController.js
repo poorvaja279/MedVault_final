@@ -5,6 +5,7 @@ const Doctor = require("../models/Doctor");
 const PendingDoctor = require("../models/PendingDoctor");
 const { generatePatientId, generateDoctorId } = require("../utils/idGenerator");
 const verifyDoctorNMC = require("../utils/nmcVerifier");
+const axios = require("axios"); // ✅ add this
 
 // Helper to generate unique patientId
 async function getUniquePatientId() {
