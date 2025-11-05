@@ -139,11 +139,11 @@ doctorBtn.onclick = () => {
   welcomeImage.src = "https://cdn-icons-png.flaticon.com/512/387/387561.png";
 };
 
-// ✅ Auto switch Localhost <-> Render
+// ✅ Auto detect Localhost or Render
 const API_BASE_URL =
   location.hostname.includes("localhost")
     ? "http://localhost:5001"
-    : "https://medvault-backend.onrender.com";
+    : "https://medvault-backend-vfsu.onrender.com";
 
 // ✅ Password rules
 function validatePassword(password) {
@@ -151,14 +151,16 @@ function validatePassword(password) {
 }
 
 // ✅ Form Submit Function
-async function submitForm(form, endpoint, messageDiv) {
+async function
+submitForm(form, endpoint, messageDiv) {
   const data = Object.fromEntries(new FormData(form).entries());
 
   if (!validatePassword(data.password)) {
-    messageDiv.textContent = "Password must be 8+ chars, 1 Uppercase, 1 Special!";
+    messageDiv.textContent = "Password must be 8+ chars, include 1 uppercase & 1 special symbol!";
     messageDiv.className = "message error";
     return;
   }
+
   if (data.password !== data.confirmPassword) {
     messageDiv.textContent = "Passwords do not match!";
     messageDiv.className = "message error";
@@ -173,6 +175,7 @@ async function submitForm(form, endpoint, messageDiv) {
     });
 
     const result = await res.json();
+
     if (res.ok) {
       messageDiv.textContent = `✅ Registered! Your ID is ${result.patientId || result.doctorId}`;
       messageDiv.className = "message success";
@@ -181,8 +184,9 @@ async function submitForm(form, endpoint, messageDiv) {
       messageDiv.textContent = `❌ ${result.error}`;
       messageDiv.className = "message error";
     }
+
   } catch (e) {
-    messageDiv.textContent = "Server error! Try again.";
+    messageDiv.textContent = "🚨 Server not responding!";
     messageDiv.className = "message error";
   }
 }
