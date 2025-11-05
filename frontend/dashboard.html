@@ -175,30 +175,19 @@ async function loadRequests() {
       </div>
     </div>`).join("");
 }
-async function respond(id, action){
+
+  async function respond(id, action) {
   const token = localStorage.getItem("token");
-
-  // existing request approval call
-  await fetch(`${BASE}/api/access/respond`,{
-    method:"POST", 
-    headers:{ "Content-Type":"application/json", Authorization:`Bearer ${token}` },
-    body:JSON.stringify({requestId:id,action})
+  await fetch(`${BASE}/api/access/respond`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ requestId: id, action })
   });
-
-  // new: save approval date
-  if (action === "approved") {
-    await fetch(`${BASE}/api/approval/save`, {
-      method:"POST",
-      headers:{ "Content-Type":"application/json", Authorization:`Bearer ${token}` },
-      body:JSON.stringify({ doctorId:id })
-    });
-  }
-
-  // refresh list
-  loadRequests();
+  loadRequests(); // refresh after action
 }
 
-loadRequests();
+loadRequests(); // load requests when page opens
+
 
 // ====== Charts ======
 const bpCtx=document.getElementById("bpChart").getContext("2d");
