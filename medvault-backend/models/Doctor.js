@@ -14,11 +14,6 @@ const doctorSchema = new mongoose.Schema({
   walletAddress: { type: String },
   status: { type: String, default: "pending" },
 
-  // ✅ Added to store latitude & longitude
-  location: {
-    lat: { type: Number },
-    lng: { type: Number }
-  }
-});
+
 
 module.exports = mongoose.model("Doctor", doctorSchema);
