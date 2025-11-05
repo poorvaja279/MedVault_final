@@ -59,12 +59,11 @@ const API_BASE = location.hostname.includes("localhost")
 // ✅ Correct token key
 const token = localStorage.getItem("adminToken");
 
+// ✅ Auth check
 if (!token) {
   alert("⚠️ Please log in as admin first.");
   window.location.href = "admin-login.html";
 }
-
-const tableBody = document.getElementById("pendingDoctorsTableBody");
 
 // ✅ Logout
 document.getElementById("logoutBtn").onclick = () => {
@@ -72,6 +71,8 @@ document.getElementById("logoutBtn").onclick = () => {
   alert("✅ Logged out");
   window.location.href = "admin-login.html";
 };
+
+const tableBody = document.getElementById("pendingDoctorsTableBody");
 
 // ✅ Fetch pending doctors
 async function fetchPendingDoctors() {
@@ -121,7 +122,7 @@ async function approveDoctor(id) {
   });
 
   const result = await res.json();
-  alert(result.message || "Approved");
+  alert(result.message || "Doctor approved");
   document.getElementById(`row-${id}`)?.remove();
 }
 
@@ -135,11 +136,11 @@ async function rejectDoctor(id) {
   });
 
   const result = await res.json();
-  alert(result.message || "Rejected");
+  alert(result.message || "Doctor rejected");
   document.getElementById(`row-${id}`)?.remove();
 }
 
-// ✅ Load data
+// ✅ Load data on page load
 fetchPendingDoctors();
 </script>
 </body>
