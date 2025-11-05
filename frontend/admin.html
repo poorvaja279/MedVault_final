@@ -62,14 +62,14 @@ const token = localStorage.getItem("token");
 // ✅ Auth check
 if (!token) {
   alert("⚠️ Please log in as admin first.");
-  window.location.href = "admin-login.html";
+  window.location.href = "login.html";
 }
 
 // ✅ Logout
 document.getElementById("logoutBtn").onclick = () => {
   localStorage.removeItem("token");
   alert("✅ Logged out");
-  window.location.href = "admin-login.html";
+  window.location.href = "login.html";
 };
 
 const tableBody = document.getElementById("pendingDoctorsTableBody");
