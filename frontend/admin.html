@@ -56,8 +56,8 @@ const API_BASE = location.hostname.includes("localhost")
   ? "http://localhost:5001/api/admin"
   : "https://medvault-backend-vfsu.onrender.com/api/admin";
 
-// ✅ Correct token key
-const token = localStorage.getItem("adminToken");
+// ✅ Correct token key (now using token)
+const token = localStorage.getItem("token");
 
 // ✅ Auth check
 if (!token) {
@@ -67,7 +67,7 @@ if (!token) {
 
 // ✅ Logout
 document.getElementById("logoutBtn").onclick = () => {
-  localStorage.removeItem("adminToken");
+  localStorage.removeItem("token");
   alert("✅ Logged out");
   window.location.href = "admin-login.html";
 };
